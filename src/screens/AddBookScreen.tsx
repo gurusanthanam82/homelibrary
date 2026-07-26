@@ -7,21 +7,25 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
-import { colors, radii, genreColors, statusLabels, shelves as SHELVES } from '../theme';
+import { colors, radii, GENRES as BASE_GENRES, statusLabels, shelves as BASE_SHELVES } from '../theme';
 import { useAuth } from '../contexts/AuthContext';
+import { useAppData } from '../contexts/AppDataContext';
 import { addBook, searchBooksByISBN } from '../services/books';
 import type { Book, LibraryStackParamList } from '../types';
 
 type Nav = NativeStackNavigationProp<LibraryStackParamList, 'AddBook'>;
 type Route = RouteProp<LibraryStackParamList, 'AddBook'>;
 
-const GENRES = Object.keys(genreColors);
 const STATUSES: Book['status'][] = ['unread', 'reading', 'finished'];
 
 export default function AddBookScreen() {
   const { session } = useAuth();
+  const { data, addCustomGenre, addCustomShelf } = useAppData();
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
+
+  const GENRES = [...BASE_GENRES, ...data.customGenres];
+  const SHELVES = [...BASE_SHELVES, ...data.customShelves];
 
   const [title, setTitle] = useState(route.params?.prefill?.title ?? '');
   const [author, setAuthor] = useState(route.params?.prefill?.author ?? '');
@@ -33,6 +37,26 @@ export default function AddBookScreen() {
   const [publisher, setPublisher] = useState('');
   const [loading, setLoading] = useState(false);
   const [lookingUp, setLookingUp] = useState(false);
+  const [customGenreOpen, setCustomGenreOpen] = useState(false);
+  const [customGenreDraft, setCustomGenreDraft] = useState('');
+  const [customShelfOpen, setCustomShelfOpen] = useState(false);
+  const [customShelfDraft, setCustomShelfDraft] = useState('');
+
+  function saveCustomGenre() {
+    if (!customGenreDraft.trim()) return;
+    addCustomGenre(customGenreDraft.trim());
+    setGenre(customGenreDraft.trim());
+    setCustomGenreDraft('');
+    setCustomGenreOpen(false);
+  }
+
+  function saveCustomShelf() {
+    if (!customShelfDraft.trim()) return;
+    addCustomShelf(customShelfDraft.trim());
+    setShelf(customShelfDraft.trim());
+    setCustomShelfDraft('');
+    setCustomShelfOpen(false);
+  }
 
   async function handleISBNLookup() {
     if (!isbn) return;
@@ -109,11 +133,30 @@ export default function AddBookScreen() {
 
         <View style={styles.row}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.label}>Genre</Text>
+            <View style={styles.labelRow}>
+              <Text style={styles.label}>Genre</Text>
+              <TouchableOpacity onPress={() => setCustomGenreOpen((v) => !v)}>
+                <Text style={styles.newGenreLink}>＋ New</Text>
+              </TouchableOpacity>
+            </View>
             <TouchableOpacity style={styles.pickerBox} onPress={() => setGenre(GENRES[(GENRES.indexOf(genre) + 1) % GENRES.length])}>
               <Text style={styles.pickerText}>{genre}</Text>
               <Ionicons name="swap-horizontal" size={14} color={colors.maroon} />
             </TouchableOpacity>
+            {customGenreOpen && (
+              <View style={[styles.row, { marginTop: 8 }]}>
+                <TextInput
+                  style={[styles.input, { flex: 1 }]}
+                  placeholder="e.g. Graphic Novel"
+                  placeholderTextColor={colors.textFaint}
+                  value={customGenreDraft}
+                  onChangeText={setCustomGenreDraft}
+                />
+                <TouchableOpacity style={styles.lookupBtn} onPress={saveCustomGenre}>
+                  <Text style={styles.lookupBtnText}>Add</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.label}>Status</Text>
@@ -125,7 +168,12 @@ export default function AddBookScreen() {
         </View>
 
         <View>
-          <Text style={styles.label}>Shelf</Text>
+          <View style={styles.labelRow}>
+            <Text style={styles.label}>Shelf</Text>
+            <TouchableOpacity onPress={() => setCustomShelfOpen((v) => !v)}>
+              <Text style={styles.newGenreLink}>＋ New</Text>
+            </TouchableOpacity>
+          </View>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {SHELVES.map((s) => (
               <TouchableOpacity key={s} style={[styles.shelfChip, shelf === s && styles.shelfChipActive]} onPress={() => setShelf(shelf === s ? '' : s)}>
@@ -133,6 +181,20 @@ export default function AddBookScreen() {
               </TouchableOpacity>
             ))}
           </View>
+          {customShelfOpen && (
+            <View style={[styles.row, { marginTop: 8 }]}>
+              <TextInput
+                style={[styles.input, { flex: 1 }]}
+                placeholder="e.g. Garage, Office…"
+                placeholderTextColor={colors.textFaint}
+                value={customShelfDraft}
+                onChangeText={setCustomShelfDraft}
+              />
+              <TouchableOpacity style={styles.lookupBtn} onPress={saveCustomShelf}>
+                <Text style={styles.lookupBtnText}>Add</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
 
         <View style={styles.row}>
@@ -159,6 +221,8 @@ const styles = StyleSheet.create({
   saveBtnText: { color: colors.white, fontWeight: '700', fontSize: 13 },
   scroll: { flex: 1 },
   label: { fontSize: 11, fontWeight: '700', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 },
+  labelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
+  newGenreLink: { fontSize: 11, fontWeight: '700', color: colors.maroon },
   input: { borderWidth: 1.5, borderColor: colors.border, borderRadius: radii.md, padding: 13, fontSize: 15, color: colors.text, backgroundColor: colors.card },
   row: { flexDirection: 'row', gap: 10 },
   lookupBtn: { backgroundColor: colors.maroon, borderRadius: radii.md, paddingHorizontal: 16, justifyContent: 'center' },

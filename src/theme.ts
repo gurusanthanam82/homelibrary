@@ -64,6 +64,11 @@ export const shadow = {
   },
 };
 
+export const GENRES = [
+  'Fiction', 'Nonfiction', 'Sci-Fi', 'Fantasy', 'Self-help', 'Memoir',
+  'Romance', 'Mystery', 'Thriller', 'History', 'Biography', 'Poetry', 'Graphic Novel',
+];
+
 export const genreColors: Record<string, string> = {
   Fiction: '#5145e5',
   'Sci-Fi': '#0ea5b7',
@@ -86,6 +91,11 @@ export const statusLabels: Record<string, string> = {
 };
 
 export const shelves = ['Living room', 'Study', 'Bedroom', 'Kids room'];
+
+export const ownershipColors: Record<string, string> = {
+  owned: '#7c766d',
+  loaned: '#d97320',
+};
 
 export const buddyColors = ['#5145e5', '#0ea5b7', '#e0892f', '#8b5cf6', '#e85d8a'];
 

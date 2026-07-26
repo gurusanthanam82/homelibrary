@@ -8,6 +8,10 @@ export type Book = {
   genre?: string;
   published_year?: number;
   status: 'unread' | 'reading' | 'finished';
+  progress?: number;
+  ownership?: 'owned' | 'loaned';
+  audiobook_url?: string;
+  seconds_read?: number;
   rating?: number;
   notes?: string;
   shelf?: string;
@@ -16,6 +20,8 @@ export type Book = {
   created_at: string;
   user_id: string;
 };
+
+export type Chapter = { title: string; page: number; read: boolean };
 
 export type SharedBook = { title: string; author: string; color: string };
 
@@ -57,6 +63,7 @@ export type Ebook = {
   id: string;
   name: string;
   bookTitle: string;
+  bookId?: string;
   format: 'PDF' | 'EPUB' | 'MOBI';
   size: string;
   color: string;

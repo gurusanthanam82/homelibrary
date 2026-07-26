@@ -1,16 +1,16 @@
 import type { Book, Buddy, Note, Podcast, Profile } from './types';
 
 export const SAMPLE_BOOKS: Array<Omit<Book, 'id' | 'created_at' | 'user_id'>> = [
-  { title: 'The Overstory', author: 'Richard Powers', genre: 'Fiction', language: 'English', publisher: 'W. W. Norton', isbn: '9780393635225', status: 'reading', shelf: 'Living room' },
-  { title: 'Sapiens', author: 'Yuval Noah Harari', genre: 'Nonfiction', language: 'English', publisher: 'Harper', isbn: '9780062316097', status: 'finished', shelf: 'Study' },
-  { title: 'Dune', author: 'Frank Herbert', genre: 'Sci-Fi', language: 'English', publisher: 'Chilton Books', isbn: '9780441013593', status: 'finished', shelf: 'Living room' },
-  { title: 'Pachinko', author: 'Min Jin Lee', genre: 'Fiction', language: 'English', publisher: 'Grand Central', isbn: '9781455563937', status: 'unread', shelf: 'Bedroom' },
-  { title: 'Atomic Habits', author: 'James Clear', genre: 'Self-help', language: 'English', publisher: 'Avery', isbn: '9780735211292', status: 'reading', shelf: 'Study' },
-  { title: 'The Hobbit', author: 'J. R. R. Tolkien', genre: 'Fantasy', language: 'English', publisher: 'Allen & Unwin', isbn: '9780547928227', status: 'finished', shelf: 'Kids room' },
-  { title: 'Educated', author: 'Tara Westover', genre: 'Memoir', language: 'English', publisher: 'Random House', isbn: '9780399590504', status: 'unread', shelf: 'Bedroom' },
-  { title: 'Klara and the Sun', author: 'Kazuo Ishiguro', genre: 'Sci-Fi', language: 'English', publisher: 'Faber & Faber', isbn: '9780571364886', status: 'reading', shelf: 'Living room' },
-  { title: 'Thinking, Fast and Slow', author: 'Daniel Kahneman', genre: 'Nonfiction', language: 'English', publisher: 'Farrar, Straus', isbn: '9780374533557', status: 'unread', shelf: 'Study' },
-  { title: 'Normal People', author: 'Sally Rooney', genre: 'Fiction', language: 'English', publisher: 'Faber & Faber', isbn: '9780571334650', status: 'finished', shelf: 'Bedroom' },
+  { title: 'The Overstory', author: 'Richard Powers', genre: 'Fiction', language: 'English', publisher: 'W. W. Norton', isbn: '9780393635225', status: 'reading', progress: 62, shelf: 'Living room' },
+  { title: 'Sapiens', author: 'Yuval Noah Harari', genre: 'Nonfiction', language: 'English', publisher: 'Harper', isbn: '9780062316097', status: 'finished', progress: 100, shelf: 'Study' },
+  { title: 'Dune', author: 'Frank Herbert', genre: 'Sci-Fi', language: 'English', publisher: 'Chilton Books', isbn: '9780441013593', status: 'finished', progress: 100, shelf: 'Living room' },
+  { title: 'Pachinko', author: 'Min Jin Lee', genre: 'Fiction', language: 'English', publisher: 'Grand Central', isbn: '9781455563937', status: 'unread', progress: 0, shelf: 'Bedroom' },
+  { title: 'Atomic Habits', author: 'James Clear', genre: 'Self-help', language: 'English', publisher: 'Avery', isbn: '9780735211292', status: 'reading', progress: 40, shelf: 'Study' },
+  { title: 'The Hobbit', author: 'J. R. R. Tolkien', genre: 'Fantasy', language: 'English', publisher: 'Allen & Unwin', isbn: '9780547928227', status: 'finished', progress: 100, shelf: 'Kids room' },
+  { title: 'Educated', author: 'Tara Westover', genre: 'Memoir', language: 'English', publisher: 'Random House', isbn: '9780399590504', status: 'unread', progress: 0, shelf: 'Bedroom' },
+  { title: 'Klara and the Sun', author: 'Kazuo Ishiguro', genre: 'Sci-Fi', language: 'English', publisher: 'Faber & Faber', isbn: '9780571364886', status: 'reading', progress: 18, shelf: 'Living room' },
+  { title: 'Thinking, Fast and Slow', author: 'Daniel Kahneman', genre: 'Nonfiction', language: 'English', publisher: 'Farrar, Straus', isbn: '9780374533557', status: 'unread', progress: 0, shelf: 'Study' },
+  { title: 'Normal People', author: 'Sally Rooney', genre: 'Fiction', language: 'English', publisher: 'Faber & Faber', isbn: '9780571334650', status: 'finished', progress: 100, shelf: 'Bedroom' },
 ];
 
 export const SAMPLE_BUDDIES: Buddy[] = [

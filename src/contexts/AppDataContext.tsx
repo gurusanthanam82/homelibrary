@@ -2,9 +2,11 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { buddyColors } from '../theme';
 import { SAMPLE_BUDDIES, SAMPLE_NOTES, SAMPLE_PODCASTS, SAMPLE_PROFILE } from '../sampleData';
-import type { Buddy, Note, Podcast, Ebook, Profile } from '../types';
+import type { Buddy, Note, Podcast, Ebook, Profile, Chapter } from '../types';
 
-const STORAGE_KEY = 'home-library:app-data:v2';
+const STORAGE_KEY = 'home-library:app-data:v3';
+
+type Monitor = { bookId: string | null; startedAt: number | null; paused: boolean; accumSeconds: number };
 
 type AppData = {
   buddies: Buddy[];
@@ -12,6 +14,9 @@ type AppData = {
   podcasts: Podcast[];
   ebooks: Ebook[];
   profile: Profile;
+  customGenres: string[];
+  customShelves: string[];
+  chapters: Record<string, Chapter[]>;
   driveFolderUrl: string;
   driveFreq: 'Daily' | 'Weekly' | 'Monthly';
   driveLastBackup: string;
@@ -27,6 +32,9 @@ const defaultData: AppData = {
   podcasts: SAMPLE_PODCASTS.map((p, i) => ({ ...p, id: `p-sample-${i}` })),
   ebooks: [],
   profile: SAMPLE_PROFILE,
+  customGenres: [],
+  customShelves: [],
+  chapters: {},
   driveFolderUrl: '',
   driveFreq: 'Weekly',
   driveLastBackup: 'Never',
@@ -35,6 +43,8 @@ const defaultData: AppData = {
   emailBackupLastSent: 'Never',
   emailBackupEnabled: false,
 };
+
+const idleMonitor: Monitor = { bookId: null, startedAt: null, paused: false, accumSeconds: 0 };
 
 type AppDataContextType = {
   data: AppData;
@@ -48,7 +58,10 @@ type AppDataContextType = {
   addPodcast: (p: Omit<Podcast, 'id'>) => void;
   removePodcast: (id: string) => void;
   addEbook: (e: Omit<Ebook, 'id'>) => void;
+  removeEbook: (id: string) => void;
   updateProfile: (updates: Partial<Profile>) => void;
+  addCustomGenre: (name: string) => void;
+  addCustomShelf: (name: string) => void;
   setDriveFolderUrl: (url: string) => void;
   setDriveFreq: (freq: AppData['driveFreq']) => void;
   backupNow: () => void;
@@ -56,13 +69,35 @@ type AppDataContextType = {
   setEmailBackupFreq: (freq: AppData['emailBackupFreq']) => void;
   toggleEmailBackup: () => void;
   sendEmailBackupNow: () => void;
+  monitor: Monitor;
+  startMonitor: (bookId: string) => void;
+  pauseMonitor: () => void;
+  resumeMonitor: () => void;
+  stopMonitor: () => number;
+  getChapters: (bookId: string) => Chapter[] | undefined;
+  generateChapters: (bookId: string) => void;
+  toggleChapter: (bookId: string, index: number) => void;
+  markAllChapters: (bookId: string, read: boolean) => void;
 };
 
 const AppDataContext = createContext<AppDataContextType | null>(null);
 
+const PLACEHOLDER_CHAPTERS: Array<{ title: string; page: number }> = [
+  { title: 'Prologue', page: 1 },
+  { title: 'Chapter 1', page: 9 },
+  { title: 'Chapter 2', page: 27 },
+  { title: 'Chapter 3', page: 48 },
+  { title: 'Chapter 4', page: 71 },
+  { title: 'Chapter 5', page: 96 },
+  { title: 'Chapter 6', page: 122 },
+  { title: 'Chapter 7', page: 149 },
+  { title: 'Epilogue', page: 178 },
+];
+
 export function AppDataProvider({ children }: { children: React.ReactNode }) {
   const [data, setData] = useState<AppData>(defaultData);
   const [loaded, setLoaded] = useState(false);
+  const [monitor, setMonitor] = useState<Monitor>(idleMonitor);
 
   useEffect(() => {
     AsyncStorage.getItem(STORAGE_KEY).then((raw) => {
@@ -135,8 +170,22 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     persist({ ...data, ebooks: [{ ...e, id: `e${Date.now()}` }, ...data.ebooks] });
   };
 
+  const removeEbook = (id: string) => {
+    persist({ ...data, ebooks: data.ebooks.filter((e) => e.id !== id) });
+  };
+
   const updateProfile = (updates: Partial<Profile>) => {
     persist({ ...data, profile: { ...data.profile, ...updates } });
+  };
+
+  const addCustomGenre = (name: string) => {
+    if (!name.trim() || data.customGenres.includes(name.trim())) return;
+    persist({ ...data, customGenres: [...data.customGenres, name.trim()] });
+  };
+
+  const addCustomShelf = (name: string) => {
+    if (!name.trim() || data.customShelves.includes(name.trim())) return;
+    persist({ ...data, customShelves: [...data.customShelves, name.trim()] });
   };
 
   const setDriveFolderUrl = (url: string) => persist({ ...data, driveFolderUrl: url });
@@ -152,6 +201,50 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
   const sendEmailBackupNow = () =>
     persist({ ...data, emailBackupLastSent: new Date().toLocaleString() });
 
+  const startMonitor = (bookId: string) => {
+    setMonitor((m) => (m.bookId === bookId ? m : { bookId, startedAt: Date.now(), paused: false, accumSeconds: 0 }));
+  };
+
+  const pauseMonitor = () => {
+    setMonitor((m) => {
+      if (!m.bookId || m.paused || !m.startedAt) return m;
+      return { ...m, paused: true, accumSeconds: m.accumSeconds + Math.floor((Date.now() - m.startedAt) / 1000), startedAt: null };
+    });
+  };
+
+  const resumeMonitor = () => {
+    setMonitor((m) => (m.bookId && m.paused ? { ...m, paused: false, startedAt: Date.now() } : m));
+  };
+
+  const stopMonitor = (): number => {
+    let total = 0;
+    setMonitor((m) => {
+      total = m.accumSeconds + (m.startedAt ? Math.floor((Date.now() - m.startedAt) / 1000) : 0);
+      return idleMonitor;
+    });
+    return total;
+  };
+
+  const getChapters = (bookId: string) => data.chapters[bookId];
+
+  const generateChapters = (bookId: string) => {
+    const chapters: Chapter[] = PLACEHOLDER_CHAPTERS.map((c) => ({ ...c, read: false }));
+    persist({ ...data, chapters: { ...data.chapters, [bookId]: chapters } });
+  };
+
+  const toggleChapter = (bookId: string, index: number) => {
+    const list = data.chapters[bookId];
+    if (!list) return;
+    const next = list.map((c, i) => (i === index ? { ...c, read: !c.read } : c));
+    persist({ ...data, chapters: { ...data.chapters, [bookId]: next } });
+  };
+
+  const markAllChapters = (bookId: string, read: boolean) => {
+    const list = data.chapters[bookId];
+    if (!list) return;
+    persist({ ...data, chapters: { ...data.chapters, [bookId]: list.map((c) => ({ ...c, read })) } });
+  };
+
   return (
     <AppDataContext.Provider
       value={{
@@ -166,7 +259,10 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
         addPodcast,
         removePodcast,
         addEbook,
+        removeEbook,
         updateProfile,
+        addCustomGenre,
+        addCustomShelf,
         setDriveFolderUrl,
         setDriveFreq,
         backupNow,
@@ -174,6 +270,15 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
         setEmailBackupFreq,
         toggleEmailBackup,
         sendEmailBackupNow,
+        monitor,
+        startMonitor,
+        pauseMonitor,
+        resumeMonitor,
+        stopMonitor,
+        getChapters,
+        generateChapters,
+        toggleChapter,
+        markAllChapters,
       }}
     >
       {children}

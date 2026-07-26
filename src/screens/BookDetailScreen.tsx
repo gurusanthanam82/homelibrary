@@ -4,28 +4,19 @@ import {
   StyleSheet, Alert, ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
+import { colors, radii, genreColor, statusColors, genreColors } from '../theme';
 import { getBook, deleteBook, updateBook } from '../services/books';
 import type { Book, LibraryStackParamList } from '../types';
 
 type Nav = NativeStackNavigationProp<LibraryStackParamList, 'BookDetail'>;
 type Route = RouteProp<LibraryStackParamList, 'BookDetail'>;
 
-const STATUS_LABELS: Record<Book['status'], string> = {
-  owned: 'Owned',
-  wishlist: 'Wishlist',
-  reading: 'Reading',
-  finished: 'Finished',
-};
-
-const STATUS_COLORS: Record<Book['status'], string> = {
-  owned: '#6366f1',
-  wishlist: '#f59e0b',
-  reading: '#10b981',
-  finished: '#3b82f6',
-};
+const GENRES = Object.keys(genreColors);
+const STATUSES: Book['status'][] = ['owned', 'reading', 'finished', 'wishlist'];
 
 export default function BookDetailScreen() {
   const navigation = useNavigation<Nav>();
@@ -34,117 +25,142 @@ export default function BookDetailScreen() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getBook(route.params.bookId)
-      .then(setBook)
-      .finally(() => setLoading(false));
+    getBook(route.params.bookId).then(setBook).finally(() => setLoading(false));
   }, [route.params.bookId]);
 
-  useEffect(() => {
+  async function patch(updates: Partial<Book>) {
     if (!book) return;
-    navigation.setOptions({
-      headerRight: () => (
-        <TouchableOpacity onPress={() => navigation.navigate('EditBook', { book })}>
-          <Ionicons name="pencil" size={20} color="#4f46e5" />
-        </TouchableOpacity>
-      ),
-    });
-  }, [book, navigation]);
-
-  async function handleDelete() {
-    Alert.alert('Delete Book', 'Are you sure?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete', style: 'destructive',
-        onPress: async () => {
-          await deleteBook(book!.id);
-          navigation.goBack();
-        },
-      },
-    ]);
-  }
-
-  async function cycleStatus() {
-    if (!book) return;
-    const statuses: Book['status'][] = ['owned', 'reading', 'finished', 'wishlist'];
-    const next = statuses[(statuses.indexOf(book.status) + 1) % statuses.length];
-    const updated = await updateBook(book.id, { status: next });
+    const updated = await updateBook(book.id, updates);
     setBook(updated);
   }
 
-  if (loading) return <ActivityIndicator style={{ flex: 1 }} size="large" color="#4f46e5" />;
+  async function captureCover() {
+    const perm = await ImagePicker.requestCameraPermissionsAsync();
+    if (!perm.granted) {
+      Alert.alert('Camera permission needed', 'Enable camera access to take a cover photo.');
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({ quality: 0.7, allowsEditing: true });
+    if (!result.canceled && result.assets[0]) {
+      patch({ cover_url: result.assets[0].uri });
+    }
+  }
+
+  function cycleGenre() {
+    if (!book) return;
+    const idx = GENRES.indexOf(book.genre ?? '');
+    patch({ genre: GENRES[(idx + 1) % GENRES.length] });
+  }
+
+  function cycleStatus() {
+    if (!book) return;
+    const idx = STATUSES.indexOf(book.status);
+    patch({ status: STATUSES[(idx + 1) % STATUSES.length] });
+  }
+
+  function handleDelete() {
+    Alert.alert('Remove book', 'Are you sure you want to remove this from your library?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Remove', style: 'destructive', onPress: async () => { await deleteBook(book!.id); navigation.goBack(); } },
+    ]);
+  }
+
+  if (loading) return <ActivityIndicator style={{ flex: 1, backgroundColor: colors.bg }} size="large" color={colors.maroon} />;
   if (!book) return <Text style={{ padding: 24 }}>Book not found.</Text>;
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {book.cover_url ? (
-        <Image source={{ uri: book.cover_url }} style={styles.cover} resizeMode="contain" />
-      ) : (
-        <View style={styles.coverPlaceholder}>
-          <Ionicons name="book" size={64} color="#ccc" />
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
+      <View style={{ padding: 20 }}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+          <Ionicons name="chevron-back" size={20} color={colors.text} />
+        </TouchableOpacity>
+      </View>
+
+      <View style={{ paddingHorizontal: 20 }}>
+        <View style={styles.coverRow}>
+          <View style={styles.coverCol}>
+            <View style={styles.coverBox}>
+              {book.cover_url ? <Image source={{ uri: book.cover_url }} style={styles.coverImg} /> : <Ionicons name="book" size={32} color={colors.textFaint} />}
+            </View>
+            <Text style={styles.coverLabel}>Front</Text>
+            <TouchableOpacity style={styles.cameraBtn} onPress={captureCover}>
+              <Ionicons name="camera-outline" size={14} color={colors.white} />
+              <Text style={styles.cameraBtnText}>Camera</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      )}
 
-      <Text style={styles.title}>{book.title}</Text>
-      <Text style={styles.author}>{book.author}</Text>
-
-      <TouchableOpacity
-        style={[styles.statusBadge, { backgroundColor: STATUS_COLORS[book.status] }]}
-        onPress={cycleStatus}
-      >
-        <Text style={styles.statusText}>{STATUS_LABELS[book.status]}</Text>
-      </TouchableOpacity>
-
-      {book.description ? (
-        <Text style={styles.description}>{book.description}</Text>
-      ) : null}
-
-      {book.isbn ? <Text style={styles.meta}>ISBN: {book.isbn}</Text> : null}
-      {book.genre ? <Text style={styles.meta}>Genre: {book.genre}</Text> : null}
-      {book.published_year ? <Text style={styles.meta}>Published: {book.published_year}</Text> : null}
-      {book.rating ? (
-        <Text style={styles.meta}>{'★'.repeat(book.rating)}{'☆'.repeat(5 - book.rating)}</Text>
-      ) : null}
-
-      {book.notes ? (
-        <View style={styles.notesBox}>
-          <Text style={styles.notesLabel}>Notes</Text>
-          <Text style={styles.notesText}>{book.notes}</Text>
+        <Text style={styles.title}>{book.title}</Text>
+        <View style={styles.authorRow}>
+          <View style={styles.authorChip}><Text style={styles.authorChipText}>{book.author}</Text></View>
         </View>
-      ) : null}
+        <TouchableOpacity style={[styles.genrePill, { backgroundColor: genreColor(book.genre) }]} onPress={cycleGenre}>
+          <Text style={styles.genrePillText}>{book.genre || 'Other'}</Text>
+          <Ionicons name="swap-horizontal" size={12} color={colors.white} />
+        </TouchableOpacity>
+      </View>
 
-      <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-        <Ionicons name="trash-outline" size={18} color="#ef4444" />
-        <Text style={styles.deleteText}>Remove from library</Text>
-      </TouchableOpacity>
+      <View style={{ paddingHorizontal: 20 }}>
+        <View style={styles.infoCard}>
+          <TouchableOpacity style={styles.infoRow} onPress={cycleStatus}>
+            <Text style={styles.infoLabel}>Status</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Text style={[styles.infoValue, { color: statusColors[book.status] }]}>{book.status}</Text>
+              <Ionicons name="swap-horizontal" size={12} color={statusColors[book.status]} />
+            </View>
+          </TouchableOpacity>
+          {book.isbn ? <View style={styles.infoRow}><Text style={styles.infoLabel}>ISBN</Text><Text style={styles.infoValue}>{book.isbn}</Text></View> : null}
+          {book.language ? <View style={styles.infoRow}><Text style={styles.infoLabel}>Language</Text><Text style={styles.infoValue}>{book.language}</Text></View> : null}
+          {book.publisher ? <View style={styles.infoRow}><Text style={styles.infoLabel}>Publisher</Text><Text style={styles.infoValue}>{book.publisher}</Text></View> : null}
+          {book.shelf ? <View style={styles.infoRow}><Text style={styles.infoLabel}>Shelf</Text><Text style={styles.infoValue}>{book.shelf}</Text></View> : null}
+          {book.published_year ? <View style={[styles.infoRow, { borderBottomWidth: 0 }]}><Text style={styles.infoLabel}>Published</Text><Text style={styles.infoValue}>{book.published_year}</Text></View> : null}
+        </View>
+
+        {book.description ? (
+          <View style={styles.descCard}>
+            <Text style={styles.descLabel}>Description</Text>
+            <Text style={styles.descText}>{book.description}</Text>
+          </View>
+        ) : null}
+
+        <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete}>
+          <Ionicons name="trash-outline" size={16} color={colors.maroon} />
+          <Text style={styles.deleteBtnText}>Remove from library</Text>
+        </TouchableOpacity>
+      </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  content: { padding: 24, alignItems: 'center' },
-  cover: { width: 140, height: 200, borderRadius: 8, marginBottom: 20 },
-  coverPlaceholder: {
-    width: 140, height: 200, borderRadius: 8, backgroundColor: '#f3f4f6',
-    alignItems: 'center', justifyContent: 'center', marginBottom: 20,
+  container: { flex: 1, backgroundColor: colors.bg },
+  backBtn: {
+    width: 40, height: 40, borderRadius: radii.md, backgroundColor: colors.card,
+    borderWidth: 1.5, borderColor: colors.border, alignItems: 'center', justifyContent: 'center',
   },
-  title: { fontSize: 22, fontWeight: '700', textAlign: 'center', color: '#111' },
-  author: { fontSize: 16, color: '#666', marginTop: 4, marginBottom: 16 },
-  statusBadge: {
-    paddingHorizontal: 16, paddingVertical: 6, borderRadius: 20, marginBottom: 20,
+  coverRow: { flexDirection: 'row', justifyContent: 'center', gap: 12 },
+  coverCol: { alignItems: 'center', gap: 6 },
+  coverBox: {
+    width: 114, height: 160, borderRadius: 9, backgroundColor: colors.chipBg,
+    alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
   },
-  statusText: { color: '#fff', fontSize: 14, fontWeight: '600' },
-  description: { fontSize: 14, color: '#555', lineHeight: 22, marginBottom: 16, textAlign: 'center' },
-  meta: { fontSize: 13, color: '#888', marginBottom: 6 },
-  notesBox: {
-    width: '100%', backgroundColor: '#f9fafb', borderRadius: 10,
-    padding: 14, marginTop: 16,
-  },
-  notesLabel: { fontSize: 12, fontWeight: '700', color: '#999', marginBottom: 6, textTransform: 'uppercase' },
-  notesText: { fontSize: 14, color: '#444', lineHeight: 20 },
-  deleteButton: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    marginTop: 32, padding: 12,
-  },
-  deleteText: { color: '#ef4444', fontSize: 14 },
+  coverImg: { width: '100%', height: '100%' },
+  coverLabel: { fontSize: 10, fontWeight: '700', color: colors.textMuted, backgroundColor: colors.card, borderWidth: 1.5, borderColor: colors.border, paddingHorizontal: 9, paddingVertical: 3, borderRadius: 14 },
+  cameraBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: colors.dark, paddingHorizontal: 11, paddingVertical: 7, borderRadius: radii.sm },
+  cameraBtnText: { color: colors.white, fontSize: 11, fontWeight: '700' },
+  title: { fontSize: 22, fontWeight: '700', color: colors.text, letterSpacing: -0.3, marginTop: 14 },
+  authorRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 },
+  authorChip: { backgroundColor: colors.chipBg, paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20 },
+  authorChipText: { fontSize: 13, fontWeight: '700', color: colors.textSoft },
+  genrePill: { flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-start', marginTop: 10, paddingHorizontal: 12, paddingVertical: 5, borderRadius: 14 },
+  genrePillText: { fontSize: 12, fontWeight: '700', color: colors.white },
+  infoCard: { backgroundColor: colors.card, borderWidth: 1.5, borderColor: colors.border, borderRadius: radii.xl, paddingHorizontal: 18, marginTop: 18 },
+  infoRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.borderSoft },
+  infoLabel: { color: colors.textMuted, fontWeight: '600', fontSize: 14 },
+  infoValue: { color: colors.text, fontWeight: '700', fontSize: 14, textTransform: 'capitalize' },
+  descCard: { marginTop: 14, backgroundColor: colors.card, borderWidth: 1.5, borderColor: colors.border, borderRadius: radii.xl, padding: 16 },
+  descLabel: { fontSize: 11, fontWeight: '800', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 },
+  descText: { fontSize: 14, color: colors.textSoft, lineHeight: 21 },
+  deleteBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 26, padding: 12 },
+  deleteBtnText: { color: colors.maroon, fontSize: 14, fontWeight: '700' },
 });

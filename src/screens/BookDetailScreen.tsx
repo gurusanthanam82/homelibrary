@@ -8,7 +8,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
-import { colors, radii, genreColor, statusColors, genreColors } from '../theme';
+import { colors, radii, genreColor, statusColors, statusLabels, genreColors } from '../theme';
 import { getBook, deleteBook, updateBook } from '../services/books';
 import type { Book, LibraryStackParamList } from '../types';
 
@@ -16,7 +16,7 @@ type Nav = NativeStackNavigationProp<LibraryStackParamList, 'BookDetail'>;
 type Route = RouteProp<LibraryStackParamList, 'BookDetail'>;
 
 const GENRES = Object.keys(genreColors);
-const STATUSES: Book['status'][] = ['owned', 'reading', 'finished', 'wishlist'];
+const STATUSES: Book['status'][] = ['unread', 'reading', 'finished'];
 
 export default function BookDetailScreen() {
   const navigation = useNavigation<Nav>();
@@ -105,7 +105,7 @@ export default function BookDetailScreen() {
           <TouchableOpacity style={styles.infoRow} onPress={cycleStatus}>
             <Text style={styles.infoLabel}>Status</Text>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <Text style={[styles.infoValue, { color: statusColors[book.status] }]}>{book.status}</Text>
+              <Text style={[styles.infoValue, { color: statusColors[book.status] }]}>{statusLabels[book.status]}</Text>
               <Ionicons name="swap-horizontal" size={12} color={statusColors[book.status]} />
             </View>
           </TouchableOpacity>

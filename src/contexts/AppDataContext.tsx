@@ -1,9 +1,10 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { buddyColors } from '../theme';
+import { SAMPLE_BUDDIES, SAMPLE_NOTES, SAMPLE_PODCASTS, SAMPLE_PROFILE } from '../sampleData';
 import type { Buddy, Note, Podcast, Ebook, Profile } from '../types';
 
-const STORAGE_KEY = 'home-library:app-data:v1';
+const STORAGE_KEY = 'home-library:app-data:v2';
 
 type AppData = {
   buddies: Buddy[];
@@ -21,24 +22,11 @@ type AppData = {
 };
 
 const defaultData: AppData = {
-  buddies: [
-    { id: 'b1', name: 'Maya', color: buddyColors[0], shared: 6, hoursLabel: '42h', hasSharedShelf: true, blocked: false },
-    { id: 'b2', name: 'Owen', color: buddyColors[1], shared: 3, hoursLabel: '18h', hasSharedShelf: true, blocked: false },
-    { id: 'b3', name: 'Priya', color: buddyColors[2], shared: 9, hoursLabel: '61h', hasSharedShelf: false, blocked: false },
-  ],
-  notes: [],
-  podcasts: [],
+  buddies: SAMPLE_BUDDIES,
+  notes: SAMPLE_NOTES.map((n, i) => ({ ...n, id: `n-sample-${i}`, createdAt: new Date().toISOString() })),
+  podcasts: SAMPLE_PODCASTS.map((p, i) => ({ ...p, id: `p-sample-${i}` })),
   ebooks: [],
-  profile: {
-    name: '',
-    email: '',
-    phone: '',
-    location: '',
-    favGenre: '',
-    goal: '24',
-    bio: '',
-    since: new Date().getFullYear().toString(),
-  },
+  profile: SAMPLE_PROFILE,
   driveFolderUrl: '',
   driveFreq: 'Weekly',
   driveLastBackup: 'Never',
@@ -100,9 +88,10 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
       name,
       color: buddyColors[data.buddies.length % buddyColors.length],
       shared: 0,
-      hoursLabel: '0h',
+      hoursLabel: '0h 0m',
       hasSharedShelf: false,
       blocked: false,
+      sharedBooks: [],
     };
     persist({ ...data, buddies: [...data.buddies, buddy] });
   };

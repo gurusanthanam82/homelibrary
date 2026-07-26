@@ -7,7 +7,7 @@ export type Book = {
   description?: string;
   genre?: string;
   published_year?: number;
-  status: 'owned' | 'wishlist' | 'reading' | 'finished';
+  status: 'unread' | 'reading' | 'finished';
   rating?: number;
   notes?: string;
   shelf?: string;
@@ -17,6 +17,8 @@ export type Book = {
   user_id: string;
 };
 
+export type SharedBook = { title: string; author: string; color: string };
+
 export type Buddy = {
   id: string;
   name: string;
@@ -25,6 +27,7 @@ export type Buddy = {
   hoursLabel: string;
   hasSharedShelf: boolean;
   blocked: boolean;
+  sharedBooks: SharedBook[];
 };
 
 export type Note = {

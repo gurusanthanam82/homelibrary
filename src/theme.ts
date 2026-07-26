@@ -65,26 +65,30 @@ export const shadow = {
 };
 
 export const genreColors: Record<string, string> = {
-  Fiction: '#7A2B45',
-  'Sci-Fi': '#0e8a8a',
+  Fiction: '#5145e5',
+  'Sci-Fi': '#0ea5b7',
   Fantasy: '#8b5cf6',
-  History: '#c98a2b',
-  Biography: '#3b6ea5',
-  'Self-Help': '#2bb38a',
-  Romance: '#e0662f',
-  Thriller: '#4a4a4a',
-  Other: '#8c8378',
+  Nonfiction: '#e0892f',
+  'Self-help': '#21a366',
+  Memoir: '#e85d8a',
 };
 
 export const statusColors: Record<string, string> = {
-  owned: '#7A2B45',
-  reading: '#0e8a8a',
-  finished: '#3b6ea5',
-  wishlist: '#c98a2b',
+  unread: '#9aa0aa',
+  reading: '#e0a020',
+  finished: '#21a366',
 };
 
-export const buddyColors = ['#7A2B45', '#0e8a8a', '#f4c542', '#8b5cf6', '#e0662f', '#3b6ea5'];
+export const statusLabels: Record<string, string> = {
+  unread: 'Unread',
+  reading: 'Reading',
+  finished: 'Read',
+};
+
+export const shelves = ['Living room', 'Study', 'Bedroom', 'Kids room'];
+
+export const buddyColors = ['#5145e5', '#0ea5b7', '#e0892f', '#8b5cf6', '#e85d8a'];
 
 export function genreColor(genre?: string) {
-  return genreColors[genre ?? ''] ?? genreColors.Other;
+  return genreColors[genre ?? ''] ?? genreColors.Fiction;
 }

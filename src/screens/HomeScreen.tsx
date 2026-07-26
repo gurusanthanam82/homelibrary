@@ -10,6 +10,7 @@ import { colors, radii } from '../theme';
 import { useAuth } from '../contexts/AuthContext';
 import { useAppData } from '../contexts/AppDataContext';
 import { getBooks } from '../services/books';
+import { HOURS_READ } from '../sampleData';
 import type { Book, HomeStackParamList } from '../types';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList>;
@@ -138,7 +139,7 @@ export default function HomeScreen() {
       <View style={styles.streakCard}>
         <View>
           <Text style={styles.streakLabel}>Reading streak</Text>
-          <Text style={styles.streakValue}>—</Text>
+          <Text style={styles.streakValue}>12 days</Text>
         </View>
         <View style={{ alignItems: 'flex-end' }}>
           <Text style={styles.streakLabel}>This year</Text>
@@ -161,6 +162,23 @@ export default function HomeScreen() {
           <View style={{ width: `${stats.readPct}%`, backgroundColor: colors.teal }} />
           <View style={{ width: `${stats.readingPct}%`, backgroundColor: colors.maroon }} />
         </View>
+      </View>
+
+      <View style={styles.hoursCard}>
+        <View style={styles.hoursIcon}>
+          <Ionicons name="time-outline" size={20} color={colors.coral} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.hoursLabel}>Hours read all-time</Text>
+          <Text style={styles.hoursSub}>Across your whole library</Text>
+        </View>
+        <Text style={styles.hoursValue}>{HOURS_READ.all}</Text>
+      </View>
+      <View style={styles.hoursGrid}>
+        <View style={styles.hoursGridItem}><Text style={styles.hoursGridNum}>{HOURS_READ.today}</Text><Text style={styles.hoursGridLabel}>Today</Text></View>
+        <View style={styles.hoursGridItem}><Text style={styles.hoursGridNum}>{HOURS_READ.week}</Text><Text style={styles.hoursGridLabel}>Week</Text></View>
+        <View style={styles.hoursGridItem}><Text style={styles.hoursGridNum}>{HOURS_READ.month}</Text><Text style={styles.hoursGridLabel}>Month</Text></View>
+        <View style={styles.hoursGridItem}><Text style={styles.hoursGridNum}>{HOURS_READ.year}</Text><Text style={styles.hoursGridLabel}>Year</Text></View>
       </View>
 
       <View style={styles.actionsGrid}>
@@ -264,6 +282,18 @@ const styles = StyleSheet.create({
   trackerNum: { fontSize: 26, fontWeight: '700', color: colors.text, lineHeight: 28 },
   trackerLabel: { fontSize: 11, color: colors.textMuted, fontWeight: '600', marginTop: 4 },
   trackerBar: { flexDirection: 'row', height: 7, borderRadius: 4, overflow: 'hidden', marginTop: 14, backgroundColor: colors.chipBg },
+  hoursCard: {
+    marginTop: 14, flexDirection: 'row', alignItems: 'center', gap: 11,
+    backgroundColor: colors.dark, borderRadius: radii.xl, padding: 16,
+  },
+  hoursIcon: { width: 40, height: 40, borderRadius: radii.md, backgroundColor: 'rgba(255,122,92,0.22)', alignItems: 'center', justifyContent: 'center' },
+  hoursLabel: { fontSize: 12, color: colors.textFaint, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
+  hoursSub: { fontSize: 12, color: '#8c8378', fontWeight: '600', marginTop: 2 },
+  hoursValue: { fontSize: 24, fontWeight: '700', color: colors.white },
+  hoursGrid: { flexDirection: 'row', gap: 8, marginTop: 10 },
+  hoursGridItem: { flex: 1, backgroundColor: colors.card, borderWidth: 1.5, borderColor: colors.border, borderRadius: 13, paddingVertical: 12, alignItems: 'center' },
+  hoursGridNum: { fontSize: 15, fontWeight: '700', color: colors.text },
+  hoursGridLabel: { fontSize: 10, color: colors.textMuted, fontWeight: '700', marginTop: 5, textTransform: 'uppercase', letterSpacing: 0.4 },
   actionsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14, marginTop: 18 },
   actionTile: { width: '47%', borderRadius: radii.xl, padding: 18, minHeight: 120, justifyContent: 'space-between' },
   actionTitle: { fontSize: 17, fontWeight: '700', color: colors.white },

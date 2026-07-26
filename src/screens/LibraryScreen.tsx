@@ -6,14 +6,20 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { colors, radii, genreColor, statusColors } from '../theme';
+import { colors, radii, genreColor, statusColors, statusLabels } from '../theme';
 import { useAuth } from '../contexts/AuthContext';
-import { getBooks } from '../services/books';
+import { getBooks, addBook } from '../services/books';
+import { SAMPLE_BOOKS } from '../sampleData';
 import type { Book, LibraryStackParamList } from '../types';
 
 type Nav = NativeStackNavigationProp<LibraryStackParamList>;
 
-const FILTERS = ['All', 'Reading', 'Owned', 'Finished', 'Wishlist'] as const;
+const FILTERS: Array<{ key: string; label: string }> = [
+  { key: 'All', label: 'All' },
+  { key: 'unread', label: 'Unread' },
+  { key: 'reading', label: 'Reading' },
+  { key: 'finished', label: 'Read' },
+];
 
 export default function LibraryScreen() {
   const { session } = useAuth();
@@ -21,7 +27,8 @@ export default function LibraryScreen() {
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [filter, setFilter] = useState<typeof FILTERS[number]>('All');
+  const [seeding, setSeeding] = useState(false);
+  const [filter, setFilter] = useState('All');
   const [query, setQuery] = useState('');
 
   const load = useCallback(async () => {
@@ -38,13 +45,26 @@ export default function LibraryScreen() {
 
   const filtered = useMemo(() => {
     let list = books;
-    if (filter !== 'All') list = list.filter((b) => b.status === filter.toLowerCase());
+    if (filter !== 'All') list = list.filter((b) => b.status === filter);
     if (query.trim()) {
       const q = query.toLowerCase();
       list = list.filter((b) => b.title.toLowerCase().includes(q) || b.author.toLowerCase().includes(q) || (b.genre ?? '').toLowerCase().includes(q));
     }
     return list;
   }, [books, filter, query]);
+
+  async function loadSampleLibrary() {
+    if (!session) return;
+    setSeeding(true);
+    try {
+      for (const b of SAMPLE_BOOKS) {
+        await addBook({ ...b, user_id: session.user.id });
+      }
+      await load();
+    } finally {
+      setSeeding(false);
+    }
+  }
 
   if (loading) return <ActivityIndicator style={{ flex: 1, backgroundColor: colors.bg }} size="large" color={colors.maroon} />;
 
@@ -89,15 +109,15 @@ export default function LibraryScreen() {
         horizontal
         showsHorizontalScrollIndicator={false}
         data={FILTERS}
-        keyExtractor={(f) => f}
+        keyExtractor={(f) => f.key}
         style={{ flexGrow: 0, marginVertical: 12 }}
         contentContainerStyle={{ gap: 8, paddingHorizontal: 20 }}
         renderItem={({ item: f }) => (
           <TouchableOpacity
-            style={[styles.filterChip, filter === f && styles.filterChipActive]}
-            onPress={() => setFilter(f)}
+            style={[styles.filterChip, filter === f.key && styles.filterChipActive]}
+            onPress={() => setFilter(f.key)}
           >
-            <Text style={[styles.filterChipText, filter === f && styles.filterChipTextActive]}>{f}</Text>
+            <Text style={[styles.filterChipText, filter === f.key && styles.filterChipTextActive]}>{f.label}</Text>
           </TouchableOpacity>
         )}
       />
@@ -119,20 +139,34 @@ export default function LibraryScreen() {
               <Text style={styles.rowAuthor}>{b.author}</Text>
               <View style={styles.pillRow}>
                 <View style={[styles.genrePill, { backgroundColor: genreColor(b.genre) }]}>
-                  <Text style={styles.genrePillText}>{b.genre || 'Other'}</Text>
+                  <Text style={styles.genrePillText}>{b.genre || 'Fiction'}</Text>
                 </View>
                 <View style={[styles.statusPill, { borderColor: statusColors[b.status] }]}>
-                  <Text style={[styles.statusPillText, { color: statusColors[b.status] }]}>{b.status}</Text>
+                  <Text style={[styles.statusPillText, { color: statusColors[b.status] }]}>{statusLabels[b.status]}</Text>
                 </View>
               </View>
             </View>
           </TouchableOpacity>
         )}
         ListEmptyComponent={
-          <View style={{ alignItems: 'center', paddingTop: 60 }}>
-            <Ionicons name="library-outline" size={56} color={colors.textFaint} />
-            <Text style={{ marginTop: 12, color: colors.textMuted, fontWeight: '700', fontSize: 16 }}>No books yet</Text>
-          </View>
+          books.length === 0 ? (
+            <View style={{ alignItems: 'center', paddingTop: 60 }}>
+              <Ionicons name="library-outline" size={56} color={colors.textFaint} />
+              <Text style={{ marginTop: 12, color: colors.textMuted, fontWeight: '700', fontSize: 16 }}>No books yet</Text>
+              <TouchableOpacity style={styles.sampleBtn} onPress={loadSampleLibrary} disabled={seeding}>
+                {seeding ? <ActivityIndicator size="small" color={colors.white} /> : (
+                  <>
+                    <Ionicons name="sparkles-outline" size={14} color={colors.white} />
+                    <Text style={styles.sampleBtnText}>Load sample library</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={{ alignItems: 'center', paddingTop: 40 }}>
+              <Text style={{ color: colors.textMuted, fontWeight: '600', fontSize: 13 }}>No books match this filter.</Text>
+            </View>
+          )
         }
       />
     </View>
@@ -172,5 +206,7 @@ const styles = StyleSheet.create({
   genrePill: { paddingHorizontal: 9, paddingVertical: 3, borderRadius: 12 },
   genrePillText: { fontSize: 11, fontWeight: '700', color: colors.white },
   statusPill: { paddingHorizontal: 9, paddingVertical: 2, borderRadius: 12, borderWidth: 1.5 },
-  statusPillText: { fontSize: 11, fontWeight: '700', textTransform: 'capitalize' },
+  statusPillText: { fontSize: 11, fontWeight: '700' },
+  sampleBtn: { flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: colors.maroon, paddingHorizontal: 18, paddingVertical: 12, borderRadius: radii.lg, marginTop: 16 },
+  sampleBtnText: { color: colors.white, fontWeight: '700', fontSize: 13 },
 });

@@ -7,7 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
-import { colors, radii, genreColors } from '../theme';
+import { colors, radii, genreColors, statusLabels, shelves as SHELVES } from '../theme';
 import { useAuth } from '../contexts/AuthContext';
 import { addBook, searchBooksByISBN } from '../services/books';
 import type { Book, LibraryStackParamList } from '../types';
@@ -16,8 +16,7 @@ type Nav = NativeStackNavigationProp<LibraryStackParamList, 'AddBook'>;
 type Route = RouteProp<LibraryStackParamList, 'AddBook'>;
 
 const GENRES = Object.keys(genreColors);
-const STATUSES: Book['status'][] = ['owned', 'reading', 'finished', 'wishlist'];
-const SHELVES = ['Living room', 'Study', 'Bedroom', 'Office'];
+const STATUSES: Book['status'][] = ['unread', 'reading', 'finished'];
 
 export default function AddBookScreen() {
   const { session } = useAuth();
@@ -28,7 +27,7 @@ export default function AddBookScreen() {
   const [author, setAuthor] = useState(route.params?.prefill?.author ?? '');
   const [isbn, setIsbn] = useState(route.params?.isbn ?? route.params?.prefill?.isbn ?? '');
   const [genre, setGenre] = useState(route.params?.prefill?.genre ?? GENRES[0]);
-  const [status, setStatus] = useState<Book['status']>('owned');
+  const [status, setStatus] = useState<Book['status']>('unread');
   const [shelf, setShelf] = useState('');
   const [language, setLanguage] = useState('');
   const [publisher, setPublisher] = useState('');
@@ -119,7 +118,7 @@ export default function AddBookScreen() {
           <View style={{ flex: 1 }}>
             <Text style={styles.label}>Status</Text>
             <TouchableOpacity style={styles.pickerBox} onPress={() => setStatus(STATUSES[(STATUSES.indexOf(status) + 1) % STATUSES.length])}>
-              <Text style={styles.pickerText}>{status}</Text>
+              <Text style={styles.pickerText}>{statusLabels[status]}</Text>
               <Ionicons name="swap-horizontal" size={14} color={colors.maroon} />
             </TouchableOpacity>
           </View>

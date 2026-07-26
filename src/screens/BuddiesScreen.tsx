@@ -145,7 +145,18 @@ export default function BuddiesScreen() {
           <View style={styles.modalSheet}>
             <View style={styles.handle} />
             <Text style={styles.sheetTitle}>{shelfBuddy?.name}'s Shelf</Text>
-            <Text style={styles.subtitle}>Shelf sharing isn't connected to real data yet — ask {shelfBuddy?.name} to share their library directly.</Text>
+            <Text style={styles.subtitle}>{shelfBuddy?.sharedBooks.length ?? 0} books visible</Text>
+            <ScrollView style={{ maxHeight: 380, marginTop: 14 }} contentContainerStyle={{ gap: 14 }}>
+              {shelfBuddy?.sharedBooks.map((bk, i) => (
+                <View key={i} style={styles.shelfBookRow}>
+                  <View style={[styles.shelfBookCover, { backgroundColor: bk.color }]} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.shelfBookTitle}>{bk.title}</Text>
+                    <Text style={styles.shelfBookAuthor}>{bk.author}</Text>
+                  </View>
+                </View>
+              ))}
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -195,6 +206,10 @@ const styles = StyleSheet.create({
   shareTile: { flex: 1, borderRadius: radii.xl, padding: 16, alignItems: 'center', gap: 6 },
   shareTileText: { fontSize: 13, fontWeight: '700', color: colors.white },
   shareBuddyRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 10 },
+  shelfBookRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  shelfBookCover: { width: 44, height: 64, borderRadius: 9 },
+  shelfBookTitle: { fontSize: 15, fontWeight: '700', color: colors.text, lineHeight: 19 },
+  shelfBookAuthor: { fontSize: 12, color: colors.textMuted, fontWeight: '600', marginTop: 3 },
   sendBtn: { backgroundColor: colors.card, borderWidth: 1.5, borderColor: colors.pinkBorder, paddingHorizontal: 14, paddingVertical: 7, borderRadius: radii.md },
   sendBtnText: { fontSize: 13, fontWeight: '700', color: colors.maroon },
 });

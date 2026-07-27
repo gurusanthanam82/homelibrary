@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   View, Text, Image, ScrollView, TouchableOpacity,
   StyleSheet, Alert, ActivityIndicator, TextInput, Modal, Linking,
+  KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -61,6 +62,7 @@ export default function BookDetailScreen() {
 
   const isMonitoring = monitor.bookId === book?.id;
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const fieldInputRef = useRef<TextInput>(null);
 
   useEffect(() => {
     getBook(route.params.bookId).then(setBook).finally(() => setLoading(false));
@@ -412,54 +414,69 @@ export default function BookDetailScreen() {
       </View>
 
       {/* Field editor (Author / Language / Publisher) */}
-      <Modal visible={!!fieldSheet} transparent animationType="slide" onRequestClose={() => setFieldSheet(null)}>
+      <Modal
+        visible={!!fieldSheet}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setFieldSheet(null)}
+        onShow={() => setTimeout(() => fieldInputRef.current?.focus(), 250)}
+      >
         <View style={styles.modalScrim}>
           <TouchableOpacity style={{ flex: 1 }} onPress={() => setFieldSheet(null)} />
-          <View style={styles.modalSheet}>
-            <View style={styles.handle} />
-            <Text style={styles.sheetTitle}>Add {fieldSheet}</Text>
-            <View style={styles.chipWrap}>
-              {(fieldSheet === 'author' ? authors : fieldSheet === 'language' ? languages : publishers).map((v) => (
-                <View key={v} style={styles.miniChip}><Text style={styles.miniChipText}>{v}</Text></View>
-              ))}
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+            <View style={styles.modalSheet}>
+              <View style={styles.handle} />
+              <Text style={styles.sheetTitle}>Add {fieldSheet}</Text>
+              <View style={styles.chipWrap}>
+                {(fieldSheet === 'author' ? authors : fieldSheet === 'language' ? languages : publishers).map((v) => (
+                  <View key={v} style={styles.miniChip}><Text style={styles.miniChipText}>{v}</Text></View>
+                ))}
+              </View>
+              <View style={styles.row}>
+                <TextInput
+                  ref={fieldInputRef}
+                  style={[styles.input, { flex: 1 }]}
+                  placeholder={fieldSheet === 'language' ? 'e.g. Spanish' : fieldSheet === 'publisher' ? 'e.g. Penguin' : 'e.g. Co-author name'}
+                  placeholderTextColor={colors.textFaint}
+                  value={fieldDraft}
+                  onChangeText={setFieldDraft}
+                />
+                <TouchableOpacity style={styles.addBtn} onPress={saveFieldValue}><Text style={styles.addBtnText}>Add</Text></TouchableOpacity>
+              </View>
             </View>
-            <View style={styles.row}>
-              <TextInput
-                style={[styles.input, { flex: 1 }]}
-                placeholder={fieldSheet === 'language' ? 'e.g. Spanish' : fieldSheet === 'publisher' ? 'e.g. Penguin' : 'e.g. Co-author name'}
-                placeholderTextColor={colors.textFaint}
-                value={fieldDraft}
-                onChangeText={setFieldDraft}
-                autoFocus
-              />
-              <TouchableOpacity style={styles.addBtn} onPress={saveFieldValue}><Text style={styles.addBtnText}>Add</Text></TouchableOpacity>
-            </View>
-          </View>
+          </KeyboardAvoidingView>
         </View>
       </Modal>
 
       {/* Shelf picker */}
-      <Modal visible={shelfSheetOpen} transparent animationType="slide" onRequestClose={() => setShelfSheetOpen(false)}>
+      <Modal
+        visible={shelfSheetOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShelfSheetOpen(false)}
+      >
         <View style={styles.modalScrim}>
           <TouchableOpacity style={{ flex: 1 }} onPress={() => setShelfSheetOpen(false)} />
-          <View style={styles.modalSheet}>
-            <View style={styles.handle} />
-            <Text style={styles.sheetTitle}>Shelf location</Text>
-            <Text style={styles.sheetSub}>Tap to assign or move this book</Text>
-            {SHELVES.map((s) => (
-              <TouchableOpacity key={s} style={[styles.locRow, s === book.shelf && styles.locRowActive]} onPress={() => selectShelf(s)}>
-                <View style={styles.locIcon}><Ionicons name="bookmark" size={15} color={colors.white} /></View>
-                <Text style={styles.locName}>{s}</Text>
-                {s === book.shelf && <Ionicons name="checkmark" size={18} color={colors.maroon} />}
-              </TouchableOpacity>
-            ))}
-            <View style={styles.divider} />
-            <Text style={styles.sheetLabel}>Add new location</Text>
-            <View style={styles.row}>
-              <TextInput style={[styles.input, { flex: 1 }]} placeholder="e.g. Garage, Office…" placeholderTextColor={colors.textFaint} value={customShelfDraft} onChangeText={setCustomShelfDraft} />
-              <TouchableOpacity style={styles.addBtn} onPress={saveCustomShelf}><Text style={styles.addBtnText}>Add</Text></TouchableOpacity>
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+            <View style={styles.modalSheet}>
+              <View style={styles.handle} />
+              <Text style={styles.sheetTitle}>Shelf location</Text>
+              <Text style={styles.sheetSub}>Tap to assign or move this book</Text>
+              {SHELVES.map((s) => (
+                <TouchableOpacity key={s} style={[styles.locRow, s === book.shelf && styles.locRowActive]} onPress={() => selectShelf(s)}>
+                  <View style={styles.locIcon}><Ionicons name="bookmark" size={15} color={colors.white} /></View>
+                  <Text style={styles.locName}>{s}</Text>
+                  {s === book.shelf && <Ionicons name="checkmark" size={18} color={colors.maroon} />}
+                </TouchableOpacity>
+              ))}
+              <View style={styles.divider} />
+              <Text style={styles.sheetLabel}>Add new location</Text>
+              <View style={styles.row}>
+                <TextInput style={[styles.input, { flex: 1 }]} placeholder="e.g. Garage, Office…" placeholderTextColor={colors.textFaint} value={customShelfDraft} onChangeText={setCustomShelfDraft} />
+                <TouchableOpacity style={styles.addBtn} onPress={saveCustomShelf}><Text style={styles.addBtnText}>Add</Text></TouchableOpacity>
+              </View>
             </View>
-          </View>
+          </KeyboardAvoidingView>
         </View>
       </Modal>
 

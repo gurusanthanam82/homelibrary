@@ -2,12 +2,14 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Modal, Linking, KeyboardAvoidingView, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, radii } from '../theme';
 import { useAppData } from '../contexts/AppDataContext';
 
 export default function PodcastsScreen() {
   const navigation = useNavigation();
   const { data, addPodcast, removePodcast } = useAppData();
+  const insets = useSafeAreaInsets();
   const [query, setQuery] = useState('');
   const [addOpen, setAddOpen] = useState(false);
   const [title, setTitle] = useState('');
@@ -39,7 +41,7 @@ export default function PodcastsScreen() {
 
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: insets.top + 16, paddingBottom: 40 }}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
             <Ionicons name="chevron-back" size={20} color={colors.text} />

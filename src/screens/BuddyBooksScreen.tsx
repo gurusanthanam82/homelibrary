@@ -2,12 +2,14 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, radii } from '../theme';
 import { useAppData } from '../contexts/AppDataContext';
 
 export default function BuddyBooksScreen() {
   const navigation = useNavigation();
   const { data } = useAppData();
+  const insets = useSafeAreaInsets();
   const [query, setQuery] = useState('');
 
   const groups = useMemo(() => {
@@ -24,7 +26,7 @@ export default function BuddyBooksScreen() {
   const totalBooks = groups.reduce((sum, g) => sum + g.books.length, 0);
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: insets.top + 16, paddingBottom: 40 }}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
           <Ionicons name="chevron-back" size={20} color={colors.text} />

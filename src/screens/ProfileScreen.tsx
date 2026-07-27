@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, radii } from '../theme';
 import { useAuth } from '../contexts/AuthContext';
 import { useAppData } from '../contexts/AppDataContext';
@@ -10,6 +11,7 @@ export default function ProfileScreen() {
   const navigation = useNavigation();
   const { session, signOut } = useAuth();
   const { data, updateProfile, toggleShelfSharing } = useAppData();
+  const insets = useSafeAreaInsets();
   const [shareAll, setShareAll] = useState(false);
   const [name, setName] = useState(data.profile.name);
   const [email, setEmail] = useState(data.profile.email || session?.user.email || '');
@@ -34,7 +36,7 @@ export default function ProfileScreen() {
   const initial = (name || session?.user.email || 'R').charAt(0).toUpperCase();
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: insets.top + 16, paddingBottom: 40 }}>
       <View style={styles.headerRow}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
           <Ionicons name="chevron-back" size={20} color={colors.text} />

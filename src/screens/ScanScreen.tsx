@@ -3,12 +3,14 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator } fr
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, radii } from '../theme';
 import { searchBooksByISBN } from '../services/books';
 import type { Book } from '../types';
 
 export default function ScanScreen() {
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -77,7 +79,7 @@ export default function ScanScreen() {
       />
       <View style={styles.scrim} />
 
-      <TouchableOpacity style={styles.closeBtn} onPress={goHome}>
+      <TouchableOpacity style={[styles.closeBtn, { top: insets.top + 10 }]} onPress={goHome}>
         <Ionicons name="close" size={20} color={colors.white} />
       </TouchableOpacity>
 
@@ -150,7 +152,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.dark },
   scrim: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(27,23,20,0.35)' },
   closeBtn: {
-    position: 'absolute', top: 54, right: 20, width: 38, height: 38, borderRadius: 19,
+    position: 'absolute', right: 20, width: 38, height: 38, borderRadius: 19,
     backgroundColor: 'rgba(0,0,0,0.4)', alignItems: 'center', justifyContent: 'center',
   },
   permText: { color: colors.white, fontSize: 16, textAlign: 'center', margin: 24 },

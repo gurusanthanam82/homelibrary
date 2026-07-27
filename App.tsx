@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
 import { useFonts, SpaceGrotesk_400Regular, SpaceGrotesk_500Medium, SpaceGrotesk_700Bold } from '@expo-google-fonts/space-grotesk';
 import { AuthProvider, useAuth } from './src/contexts/AuthContext';
@@ -47,12 +48,14 @@ export default function App() {
   if (!fontsLoaded) return null;
 
   return (
-    <AuthProvider>
-      <AppDataProvider>
-        <NavigationContainer>
-          <RootNavigator />
-        </NavigationContainer>
-      </AppDataProvider>
-    </AuthProvider>
+    <SafeAreaProvider>
+      <AuthProvider>
+        <AppDataProvider>
+          <NavigationContainer>
+            <RootNavigator />
+          </NavigationContainer>
+        </AppDataProvider>
+      </AuthProvider>
+    </SafeAreaProvider>
   );
 }

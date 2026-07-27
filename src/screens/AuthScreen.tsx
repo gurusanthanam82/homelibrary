@@ -4,11 +4,13 @@ import {
   StyleSheet, KeyboardAvoidingView, Platform, Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, radii, fonts } from '../theme';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function AuthScreen() {
   const { signIn, signUp } = useAuth();
+  const insets = useSafeAreaInsets();
   const [emailFlow, setEmailFlow] = useState(false);
   const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [name, setName] = useState('');
@@ -36,7 +38,7 @@ export default function AuthScreen() {
   if (emailFlow) {
     return (
       <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <View style={{ height: 52, justifyContent: 'center' }}>
+        <View style={{ height: insets.top + 8, justifyContent: 'center' }}>
           <TouchableOpacity onPress={() => setEmailFlow(false)} style={styles.backRow}>
             <Ionicons name="chevron-back" size={20} color={colors.maroon} />
             <Text style={styles.backText}>Back</Text>
@@ -97,7 +99,7 @@ export default function AuthScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={{ height: 46 }} />
+      <View style={{ height: insets.top + 6 }} />
       <View style={styles.hero}>
         <View style={styles.iconBadge}>
           <Ionicons name="library" size={38} color={colors.white} />

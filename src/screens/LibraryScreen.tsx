@@ -6,6 +6,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, radii, genreColor, statusColors, statusLabels } from '../theme';
 import { useAuth } from '../contexts/AuthContext';
 import { getBooks, addBook } from '../services/books';
@@ -24,6 +25,7 @@ const FILTERS: Array<{ key: string; label: string }> = [
 export default function LibraryScreen() {
   const { session } = useAuth();
   const navigation = useNavigation<Nav>();
+  const insets = useSafeAreaInsets();
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -70,7 +72,7 @@ export default function LibraryScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 18 }]}>
         <Text style={styles.title}>Library</Text>
         <View style={styles.headerBtns}>
           <TouchableOpacity style={styles.primaryChip} onPress={() => navigation.navigate('AddBook', {})}>
@@ -175,7 +177,7 @@ export default function LibraryScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 18 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20 },
   title: { fontSize: 30, fontWeight: '700', color: colors.text, letterSpacing: -0.5 },
   headerBtns: { flexDirection: 'row', gap: 8 },
   secondaryBtns: { flexDirection: 'row', gap: 8, paddingHorizontal: 20, marginTop: 10 },

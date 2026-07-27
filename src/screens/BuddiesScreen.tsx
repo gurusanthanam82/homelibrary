@@ -6,6 +6,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, radii } from '../theme';
 import { useAppData } from '../contexts/AppDataContext';
 import type { BuddiesStackParamList, Buddy } from '../types';
@@ -15,6 +16,7 @@ type Nav = NativeStackNavigationProp<BuddiesStackParamList>;
 export default function BuddiesScreen() {
   const navigation = useNavigation<Nav>();
   const { data, addBuddy, toggleBlockBuddy } = useAppData();
+  const insets = useSafeAreaInsets();
   const [query, setQuery] = useState('');
   const [shareOpen, setShareOpen] = useState(false);
   const [shelfBuddy, setShelfBuddy] = useState<Buddy | null>(null);
@@ -34,7 +36,7 @@ export default function BuddiesScreen() {
 
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: insets.top + 16, paddingBottom: 40 }}>
         <Text style={styles.title}>Book buddies</Text>
         <Text style={styles.subtitle}>Tap a buddy to share what you're reading</Text>
 

@@ -4,6 +4,7 @@ import {
   StyleSheet, Modal, Alert, Linking, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, radii, buddyColors } from '../theme';
 import { useAppData } from '../contexts/AppDataContext';
 import type { Note } from '../types';
@@ -12,6 +13,7 @@ const NOTE_COLORS = [colors.maroon, colors.teal, colors.purple, '#c98a2b', '#3b6
 
 export default function NotesScreen() {
   const { data, addNote, updateNote, deleteNote } = useAppData();
+  const insets = useSafeAreaInsets();
   const [query, setQuery] = useState('');
   const [composerOpen, setComposerOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -65,7 +67,7 @@ export default function NotesScreen() {
 
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: insets.top + 16, paddingBottom: 40 }}>
         <View style={styles.header}>
           <Text style={styles.title}>Notes</Text>
           <TouchableOpacity style={styles.newBtn} onPress={() => openComposer()}>

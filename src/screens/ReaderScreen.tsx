@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-nati
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, radii } from '../theme';
 import { useAppData } from '../contexts/AppDataContext';
 import type { LibraryStackParamList } from '../types';
@@ -14,6 +15,7 @@ export default function ReaderScreen() {
   const navigation = useNavigation();
   const route = useRoute<Route>();
   const { data } = useAppData();
+  const insets = useSafeAreaInsets();
   const ebook = data.ebooks.find((e) => e.id === route.params.ebookId);
   const [page, setPage] = useState(0);
 
@@ -29,7 +31,7 @@ export default function ReaderScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
           <Ionicons name="close" size={18} color={colors.text} />
         </TouchableOpacity>
@@ -64,7 +66,7 @@ export default function ReaderScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bgAlt },
-  header: { paddingTop: 50, paddingHorizontal: 16, paddingBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 10, borderBottomWidth: 1, borderBottomColor: colors.border },
+  header: { paddingHorizontal: 16, paddingBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 10, borderBottomWidth: 1, borderBottomColor: colors.border },
   backBtn: { width: 36, height: 36, borderRadius: radii.md, backgroundColor: colors.card, borderWidth: 1.5, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },
   title: { fontSize: 14, fontWeight: '700', color: colors.text },
   subtitle: { fontSize: 11, color: colors.textMuted, fontWeight: '600', marginTop: 1 },

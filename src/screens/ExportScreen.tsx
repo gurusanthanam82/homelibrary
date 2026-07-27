@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, radii } from '../theme';
 import { useAuth } from '../contexts/AuthContext';
 import { useAppData } from '../contexts/AppDataContext';
@@ -27,6 +28,7 @@ export default function ExportScreen() {
   const navigation = useNavigation();
   const { session } = useAuth();
   const { data, setDriveFolderUrl, setDriveFreq, backupNow, setEmailBackupEmail, setEmailBackupFreq, toggleEmailBackup, sendEmailBackupNow } = useAppData();
+  const insets = useSafeAreaInsets();
   const [books, setBooks] = useState<Book[]>([]);
   const [driveOpen, setDriveOpen] = useState(false);
   const [emailOpen, setEmailOpen] = useState(false);
@@ -52,7 +54,7 @@ export default function ExportScreen() {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: insets.top + 16, paddingBottom: 40 }}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
           <Ionicons name="chevron-back" size={20} color={colors.text} />

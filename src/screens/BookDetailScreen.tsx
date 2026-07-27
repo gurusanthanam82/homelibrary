@@ -10,6 +10,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   colors, radii, genreColor, statusColors, statusLabels, ownershipColors,
   GENRES as BASE_GENRES, shelves as BASE_SHELVES,
@@ -42,6 +43,7 @@ function splitList(v?: string) {
 export default function BookDetailScreen() {
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
+  const insets = useSafeAreaInsets();
   const {
     data, addCustomGenre, addCustomShelf, addEbook, removeEbook,
     monitor, startMonitor, pauseMonitor, resumeMonitor, stopMonitor,
@@ -200,7 +202,7 @@ export default function BookDetailScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
-      <View style={{ padding: 20 }}>
+      <View style={{ paddingHorizontal: 20, paddingTop: insets.top + 16, paddingBottom: 20 }}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
           <Ionicons name="chevron-back" size={20} color={colors.text} />
         </TouchableOpacity>

@@ -5,6 +5,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, radii, buddyColors } from '../theme';
 import { useAppData } from '../contexts/AppDataContext';
 import type { LibraryStackParamList } from '../types';
@@ -20,6 +21,7 @@ function fmtSize(bytes?: number) {
 export default function EbooksScreen() {
   const navigation = useNavigation<Nav>();
   const { data, addEbook } = useAppData();
+  const insets = useSafeAreaInsets();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
   const [pending, setPending] = useState<{ name: string; size: string; uri: string; format: 'PDF' | 'EPUB' | 'MOBI' } | null>(null);
@@ -58,7 +60,7 @@ export default function EbooksScreen() {
 
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: insets.top + 16, paddingBottom: 40 }}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
             <Ionicons name="chevron-back" size={20} color={colors.text} />

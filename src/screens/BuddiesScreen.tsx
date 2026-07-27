@@ -22,16 +22,43 @@ export default function BuddiesScreen() {
   const [shelfBuddy, setShelfBuddy] = useState<Buddy | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteName, setInviteName] = useState('');
+  const [inviteEmail, setInviteEmail] = useState('');
   const inviteInputRef = useRef<TextInput>(null);
 
   const q = query.toLowerCase();
   const active = data.buddies.filter((b) => !b.blocked && b.name.toLowerCase().includes(q));
   const blocked = data.buddies.filter((b) => b.blocked);
 
+  function inviteMessage() {
+    const who = inviteName.trim() ? `Hey ${inviteName.trim()}! ` : 'Hey! ';
+    return `${who}Join me on Stacks to track our reading together and share books: https://stacks.app/invite`;
+  }
+
+  function resetInvite() {
+    setInviteName('');
+    setInviteEmail('');
+    setInviteOpen(false);
+  }
+
   function saveInvite() {
     if (inviteName.trim()) addBuddy(inviteName.trim());
-    setInviteName('');
-    setInviteOpen(false);
+    resetInvite();
+  }
+
+  function inviteViaWhatsApp() {
+    if (inviteName.trim()) addBuddy(inviteName.trim());
+    const url = `whatsapp://send?text=${encodeURIComponent(inviteMessage())}`;
+    Linking.openURL(url).catch(() => Alert.alert('WhatsApp not installed', 'Install WhatsApp to send this invite.'));
+    resetInvite();
+  }
+
+  function inviteViaEmail() {
+    if (inviteName.trim()) addBuddy(inviteName.trim());
+    const subject = encodeURIComponent('Join me on Stacks');
+    const body = encodeURIComponent(inviteMessage());
+    const to = inviteEmail.trim();
+    Linking.openURL(`mailto:${to}?subject=${subject}&body=${body}`).catch(() => Alert.alert('Could not open mail app'));
+    resetInvite();
   }
 
   return (
@@ -110,8 +137,22 @@ export default function BuddiesScreen() {
               <View style={styles.handle} />
               <Text style={styles.sheetTitle}>Invite a buddy</Text>
               <TextInput ref={inviteInputRef} style={styles.inviteInput} placeholder="Name" placeholderTextColor={colors.textFaint} value={inviteName} onChangeText={setInviteName} />
+              <TextInput style={[styles.inviteInput, { marginTop: 10 }]} placeholder="Email (optional, for email invite)" placeholderTextColor={colors.textFaint} value={inviteEmail} onChangeText={setInviteEmail} autoCapitalize="none" keyboardType="email-address" />
+
+              <Text style={styles.inviteViaLabel}>Send invite via</Text>
+              <View style={styles.shareRow}>
+                <TouchableOpacity style={[styles.shareTile, { backgroundColor: '#25d366' }]} onPress={inviteViaWhatsApp}>
+                  <Ionicons name="logo-whatsapp" size={24} color={colors.white} />
+                  <Text style={styles.shareTileText}>WhatsApp</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.shareTile, { backgroundColor: colors.teal }]} onPress={inviteViaEmail}>
+                  <Ionicons name="mail-outline" size={24} color={colors.white} />
+                  <Text style={styles.shareTileText}>Email</Text>
+                </TouchableOpacity>
+              </View>
+
               <TouchableOpacity style={styles.saveInviteBtn} onPress={saveInvite}>
-                <Text style={styles.saveInviteBtnText}>Add buddy</Text>
+                <Text style={styles.saveInviteBtnText}>Just add buddy (no invite)</Text>
               </TouchableOpacity>
             </View>
           </KeyboardAvoidingView>
@@ -211,8 +252,9 @@ const styles = StyleSheet.create({
   handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: colors.border, alignSelf: 'center', marginBottom: 16 },
   sheetTitle: { fontSize: 20, fontWeight: '700', color: colors.text },
   inviteInput: { marginTop: 16, borderWidth: 1.5, borderColor: colors.border, borderRadius: radii.md, padding: 13, fontSize: 15, color: colors.text, backgroundColor: colors.card },
-  saveInviteBtn: { marginTop: 16, backgroundColor: colors.maroon, padding: 16, borderRadius: radii.lg, alignItems: 'center' },
-  saveInviteBtnText: { color: colors.white, fontWeight: '700', fontSize: 16 },
+  inviteViaLabel: { fontSize: 12, fontWeight: '700', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 18, marginBottom: 4 },
+  saveInviteBtn: { marginTop: 16, backgroundColor: colors.chipBg, padding: 16, borderRadius: radii.lg, alignItems: 'center' },
+  saveInviteBtnText: { color: colors.text, fontWeight: '700', fontSize: 15 },
   shareRow: { flexDirection: 'row', gap: 12, marginTop: 18 },
   shareTile: { flex: 1, borderRadius: radii.xl, padding: 16, alignItems: 'center', gap: 6 },
   shareTileText: { fontSize: 13, fontWeight: '700', color: colors.white },

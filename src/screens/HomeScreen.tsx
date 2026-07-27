@@ -11,8 +11,13 @@ import { colors, radii } from '../theme';
 import { useAuth } from '../contexts/AuthContext';
 import { useAppData } from '../contexts/AppDataContext';
 import { getBooks } from '../services/books';
-import { HOURS_READ } from '../sampleData';
 import type { Book, HomeStackParamList } from '../types';
+
+function fmtHours(sec: number) {
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  return `${h}h ${m}m`;
+}
 
 type Nav = NativeStackNavigationProp<HomeStackParamList>;
 
@@ -67,6 +72,7 @@ export default function HomeScreen() {
   }, [search, books]);
 
   const upNext = books.filter((b) => b.status === 'reading').slice(0, 5);
+  const totalSecondsRead = books.reduce((sum, b) => sum + (b.seconds_read ?? 0), 0);
 
   const displayName = data.profile.name || session?.user.email?.split('@')[0] || 'Reader';
   const initial = displayName.charAt(0).toUpperCase();
@@ -151,7 +157,7 @@ export default function HomeScreen() {
       <View style={styles.streakCard}>
         <View>
           <Text style={styles.streakLabel}>Reading streak</Text>
-          <Text style={styles.streakValue}>12 days</Text>
+          <Text style={styles.streakValue}>{books.some((b) => b.status === 'reading') ? '1 day' : '0 days'}</Text>
         </View>
         <View style={{ alignItems: 'flex-end' }}>
           <Text style={styles.streakLabel}>This year</Text>
@@ -184,13 +190,7 @@ export default function HomeScreen() {
           <Text style={styles.hoursLabel}>Hours read all-time</Text>
           <Text style={styles.hoursSub}>Across your whole library</Text>
         </View>
-        <Text style={styles.hoursValue}>{HOURS_READ.all}</Text>
-      </View>
-      <View style={styles.hoursGrid}>
-        <View style={styles.hoursGridItem}><Text style={styles.hoursGridNum}>{HOURS_READ.today}</Text><Text style={styles.hoursGridLabel}>Today</Text></View>
-        <View style={styles.hoursGridItem}><Text style={styles.hoursGridNum}>{HOURS_READ.week}</Text><Text style={styles.hoursGridLabel}>Week</Text></View>
-        <View style={styles.hoursGridItem}><Text style={styles.hoursGridNum}>{HOURS_READ.month}</Text><Text style={styles.hoursGridLabel}>Month</Text></View>
-        <View style={styles.hoursGridItem}><Text style={styles.hoursGridNum}>{HOURS_READ.year}</Text><Text style={styles.hoursGridLabel}>Year</Text></View>
+        <Text style={styles.hoursValue}>{fmtHours(totalSecondsRead)}</Text>
       </View>
 
       <View style={styles.actionsGrid}>

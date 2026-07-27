@@ -43,6 +43,11 @@ export async function deleteBook(id: string) {
   if (error) throw error;
 }
 
+export async function deleteAllBooks(userId: string) {
+  const { error } = await supabase.from('books').delete().eq('user_id', userId);
+  if (error) throw error;
+}
+
 export async function searchBooksByISBN(isbn: string): Promise<Partial<Book> | null> {
   const res = await fetch(`https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&format=json&jscmd=details`);
   const json = await res.json();

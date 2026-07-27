@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Alert, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, radii } from '../theme';
 import { useAuth } from '../contexts/AuthContext';
 import { useAppData } from '../contexts/AppDataContext';
+import { deleteAllBooks } from '../services/books';
 
 export default function ProfileScreen() {
   const navigation = useNavigation();
   const { session, signOut } = useAuth();
-  const { data, updateProfile, toggleShelfSharing } = useAppData();
+  const { data, updateProfile, toggleShelfSharing, resetAllData } = useAppData();
+  const [resetting, setResetting] = useState(false);
   const insets = useSafeAreaInsets();
   const [shareAll, setShareAll] = useState(false);
   const [name, setName] = useState(data.profile.name);
@@ -31,6 +33,33 @@ export default function ProfileScreen() {
       { text: 'Cancel', style: 'cancel' },
       { text: 'Sign Out', style: 'destructive', onPress: signOut },
     ]);
+  }
+
+  function handleClearSampleData() {
+    Alert.alert(
+      'Clear all data',
+      'This permanently deletes every book, buddy, note, podcast, and e-book so you can start testing from a clean slate. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete everything',
+          style: 'destructive',
+          onPress: async () => {
+            if (!session) return;
+            setResetting(true);
+            try {
+              await deleteAllBooks(session.user.id);
+              resetAllData();
+              Alert.alert('Done', 'All sample data has been removed.');
+            } catch (e: any) {
+              Alert.alert('Error', e.message);
+            } finally {
+              setResetting(false);
+            }
+          },
+        },
+      ]
+    );
   }
 
   const initial = (name || session?.user.email || 'R').charAt(0).toUpperCase();
@@ -96,6 +125,19 @@ export default function ProfileScreen() {
         <Text style={styles.saveBtnText}>Save profile</Text>
       </TouchableOpacity>
 
+      <View style={styles.dangerSection}>
+        <Text style={styles.dangerTitle}>Danger zone</Text>
+        <Text style={styles.dangerSub}>Remove every book, buddy, note, podcast and e-book to start testing fresh.</Text>
+        <TouchableOpacity style={styles.dangerBtn} onPress={handleClearSampleData} disabled={resetting}>
+          {resetting ? <ActivityIndicator size="small" color={colors.maroon} /> : (
+            <>
+              <Ionicons name="trash-outline" size={16} color={colors.maroon} />
+              <Text style={styles.dangerBtnText}>Clear all data</Text>
+            </>
+          )}
+        </TouchableOpacity>
+      </View>
+
       <TouchableOpacity style={styles.signOutBtn} onPress={handleSignOut}>
         <Ionicons name="log-out-outline" size={18} color={colors.maroon} />
         <Text style={styles.signOutText}>Sign out</Text>
@@ -134,4 +176,9 @@ const styles = StyleSheet.create({
   saveBtnText: { color: colors.white, fontWeight: '700', fontSize: 15 },
   signOutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 16, padding: 12 },
   signOutText: { color: colors.maroon, fontWeight: '700', fontSize: 14 },
+  dangerSection: { marginTop: 24, borderWidth: 1.5, borderColor: colors.pinkBorder, backgroundColor: colors.pinkBg, borderRadius: radii.lg, padding: 16 },
+  dangerTitle: { fontSize: 13, fontWeight: '700', color: colors.maroon, textTransform: 'uppercase', letterSpacing: 0.5 },
+  dangerSub: { fontSize: 12, color: colors.textMuted, fontWeight: '600', marginTop: 4, lineHeight: 17 },
+  dangerBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: colors.white, borderWidth: 1.5, borderColor: colors.maroon, borderRadius: radii.md, padding: 12, marginTop: 12 },
+  dangerBtnText: { color: colors.maroon, fontWeight: '700', fontSize: 14 },
 });

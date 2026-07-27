@@ -44,6 +44,24 @@ const defaultData: AppData = {
   emailBackupEnabled: false,
 };
 
+const blankData: AppData = {
+  buddies: [],
+  notes: [],
+  podcasts: [],
+  ebooks: [],
+  profile: { name: '', email: '', phone: '', location: '', favGenre: '', goal: '', bio: '', since: new Date().getFullYear().toString() },
+  customGenres: [],
+  customShelves: [],
+  chapters: {},
+  driveFolderUrl: '',
+  driveFreq: 'Weekly',
+  driveLastBackup: 'Never',
+  emailBackupEmail: '',
+  emailBackupFreq: 'Weekly',
+  emailBackupLastSent: 'Never',
+  emailBackupEnabled: false,
+};
+
 const idleMonitor: Monitor = { bookId: null, title: '', startedAt: null, paused: false, accumSeconds: 0 };
 
 type AppDataContextType = {
@@ -79,6 +97,7 @@ type AppDataContextType = {
   deleteChapters: (bookId: string) => void;
   toggleChapter: (bookId: string, index: number) => void;
   markAllChapters: (bookId: string, read: boolean) => void;
+  resetAllData: () => void;
 };
 
 const AppDataContext = createContext<AppDataContextType | null>(null);
@@ -143,6 +162,11 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     setData(next);
     AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next));
   }, []);
+
+  const resetAllData = useCallback(() => {
+    setMonitor(idleMonitor);
+    persist(blankData);
+  }, [persist]);
 
   const addBuddy = (name: string) => {
     const buddy: Buddy = {
@@ -313,6 +337,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
         deleteChapters,
         toggleChapter,
         markAllChapters,
+        resetAllData,
       }}
     >
       {children}

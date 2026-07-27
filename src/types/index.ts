@@ -4,6 +4,7 @@ export type Book = {
   author: string;
   isbn?: string;
   cover_url?: string;
+  back_cover_url?: string;
   description?: string;
   genre?: string;
   published_year?: number;
@@ -79,6 +80,7 @@ export type Profile = {
   goal: string;
   bio: string;
   since: string;
+  photoUrl?: string;
 };
 
 export type RootStackParamList = {

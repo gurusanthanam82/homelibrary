@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Alert, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Alert, KeyboardAvoidingView, Platform, ActivityIndicator, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as ImagePicker from 'expo-image-picker';
 import { colors, radii } from '../theme';
 import { useAuth } from '../contexts/AuthContext';
 import { useAppData } from '../contexts/AppDataContext';
@@ -22,10 +23,45 @@ export default function ProfileScreen() {
   const [favGenre, setFavGenre] = useState(data.profile.favGenre);
   const [goal, setGoal] = useState(data.profile.goal);
   const [bio, setBio] = useState(data.profile.bio);
+  const [photoUrl, setPhotoUrl] = useState(data.profile.photoUrl);
 
   function save() {
     updateProfile({ name, email, phone, location, favGenre, goal, bio });
     navigation.goBack();
+  }
+
+  async function pickFromLibrary() {
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      Alert.alert('Photo access needed', 'Enable photo library access to choose a profile photo.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.7, allowsEditing: true, aspect: [1, 1] });
+    if (!result.canceled && result.assets[0]) {
+      setPhotoUrl(result.assets[0].uri);
+      updateProfile({ photoUrl: result.assets[0].uri });
+    }
+  }
+
+  async function takePhoto() {
+    const perm = await ImagePicker.requestCameraPermissionsAsync();
+    if (!perm.granted) {
+      Alert.alert('Camera access needed', 'Enable camera access to take a profile photo.');
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({ quality: 0.7, allowsEditing: true, aspect: [1, 1] });
+    if (!result.canceled && result.assets[0]) {
+      setPhotoUrl(result.assets[0].uri);
+      updateProfile({ photoUrl: result.assets[0].uri });
+    }
+  }
+
+  function handlePickPhoto() {
+    Alert.alert('Profile photo', 'Choose a photo', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Take Photo', onPress: takePhoto },
+      { text: 'Choose from Library', onPress: pickFromLibrary },
+    ]);
   }
 
   function handleSignOut() {
@@ -78,7 +114,12 @@ export default function ProfileScreen() {
       </View>
 
       <View style={styles.avatarCol}>
-        <View style={styles.avatar}><Text style={styles.avatarText}>{initial}</Text></View>
+        <TouchableOpacity style={styles.avatar} onPress={handlePickPhoto}>
+          {photoUrl ? <Image source={{ uri: photoUrl }} style={styles.avatarImg} /> : <Text style={styles.avatarText}>{initial}</Text>}
+          <View style={styles.avatarEditBadge}>
+            <Ionicons name="camera" size={13} color={colors.white} />
+          </View>
+        </TouchableOpacity>
         <Text style={styles.title}>My profile</Text>
         <Text style={styles.subtitle}>Reader since {data.profile.since}</Text>
       </View>
@@ -152,8 +193,14 @@ const styles = StyleSheet.create({
   headerRow: { flexDirection: 'row' },
   backBtn: { width: 38, height: 38, borderRadius: radii.md, backgroundColor: colors.card, borderWidth: 1.5, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },
   avatarCol: { alignItems: 'center', marginTop: 8, gap: 4 },
-  avatar: { width: 84, height: 84, borderRadius: 42, backgroundColor: colors.maroon, alignItems: 'center', justifyContent: 'center', marginBottom: 6 },
+  avatar: { width: 84, height: 84, borderRadius: 42, backgroundColor: colors.maroon, alignItems: 'center', justifyContent: 'center', marginBottom: 6, overflow: 'visible' },
+  avatarImg: { width: 84, height: 84, borderRadius: 42 },
   avatarText: { color: colors.white, fontWeight: '700', fontSize: 34 },
+  avatarEditBadge: {
+    position: 'absolute', bottom: 0, right: -2, width: 28, height: 28, borderRadius: 14,
+    backgroundColor: colors.coral, alignItems: 'center', justifyContent: 'center',
+    borderWidth: 2, borderColor: colors.bg,
+  },
   title: { fontSize: 20, fontWeight: '700', color: colors.text },
   subtitle: { fontSize: 13, color: colors.textMuted, fontWeight: '600' },
   label: { fontSize: 11, fontWeight: '700', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 },

@@ -95,6 +95,7 @@ export default function BookDetailScreen() {
     const result = await ImagePicker.launchCameraAsync({ quality: 0.7, allowsEditing: true });
     if (!result.canceled && result.assets[0]) {
       if (side === 'front') patch({ cover_url: result.assets[0].uri });
+      else patch({ back_cover_url: result.assets[0].uri });
     }
   }
 
@@ -235,8 +236,12 @@ export default function BookDetailScreen() {
           </View>
           <View style={styles.coverCol}>
             <View style={styles.coverBoxDashed}>
-              <Ionicons name="image-outline" size={28} color={colors.textFaint} />
-              <Text style={styles.coverPlaceholderText}>Back cover</Text>
+              {book.back_cover_url ? <Image source={{ uri: book.back_cover_url }} style={styles.coverImg} /> : (
+                <>
+                  <Ionicons name="image-outline" size={28} color={colors.textFaint} />
+                  <Text style={styles.coverPlaceholderText}>Back cover</Text>
+                </>
+              )}
             </View>
             <Text style={styles.coverLabel}>Back</Text>
             <TouchableOpacity style={styles.cameraBtn} onPress={() => captureCover('back')}>

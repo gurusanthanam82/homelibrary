@@ -95,7 +95,7 @@ export default function HomeScreen() {
       <View style={styles.headerRow}>
         <TouchableOpacity style={styles.profileRow} onPress={() => (navigation as any).getParent()?.getParent()?.navigate('Profile')}>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{initial}</Text>
+            {data.profile.photoUrl ? <Image source={{ uri: data.profile.photoUrl }} style={styles.avatarImg} /> : <Text style={styles.avatarText}>{initial}</Text>}
           </View>
           <View>
             <Text style={styles.welcome}>Welcome back</Text>
@@ -253,7 +253,8 @@ const styles = StyleSheet.create({
     width: 38, height: 38, borderRadius: radii.md, backgroundColor: colors.card,
     borderWidth: 1.5, borderColor: colors.border, alignItems: 'center', justifyContent: 'center',
   },
-  avatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.maroon, alignItems: 'center', justifyContent: 'center' },
+  avatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.maroon, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  avatarImg: { width: 48, height: 48, borderRadius: 24 },
   avatarText: { color: colors.white, fontWeight: '700', fontSize: 20 },
   welcome: { fontSize: 14, color: colors.textMuted, fontWeight: '600' },
   name: { fontSize: 24, fontWeight: '700', color: colors.text, letterSpacing: -0.5, lineHeight: 26 },

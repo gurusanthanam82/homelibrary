@@ -9,3 +9,4 @@ alter table books add column if not exists progress integer default 0;
 alter table books add column if not exists ownership text default 'owned';
 alter table books add column if not exists audiobook_url text;
 alter table books add column if not exists seconds_read integer default 0;
+alter table books add column if not exists back_cover_url text;

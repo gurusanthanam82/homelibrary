@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Modal, Linking } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Modal, Linking, KeyboardAvoidingView, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { colors, radii } from '../theme';
@@ -102,22 +102,24 @@ export default function PodcastsScreen() {
 
       <Modal visible={addOpen} transparent animationType="slide" onRequestClose={() => setAddOpen(false)}>
         <View style={styles.modalScrim}>
-          <View style={styles.modalSheet}>
-            <View style={styles.handle} />
-            <View style={styles.modalHeader}>
-              <Text style={styles.sheetTitle}>Add podcast</Text>
-              <TouchableOpacity style={styles.saveBtn} onPress={save}><Text style={styles.saveBtnText}>Save</Text></TouchableOpacity>
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+            <View style={styles.modalSheet}>
+              <View style={styles.handle} />
+              <View style={styles.modalHeader}>
+                <Text style={styles.sheetTitle}>Add podcast</Text>
+                <TouchableOpacity style={styles.saveBtn} onPress={save}><Text style={styles.saveBtnText}>Save</Text></TouchableOpacity>
+              </View>
+              <ScrollView style={{ maxHeight: 400 }} contentContainerStyle={{ gap: 12 }}>
+                <TextInput style={styles.input} placeholder="Episode title" placeholderTextColor={colors.textFaint} value={title} onChangeText={setTitle} />
+                <TextInput style={styles.input} placeholder="Channel" placeholderTextColor={colors.textFaint} value={channel} onChangeText={setChannel} />
+                <TextInput style={styles.input} placeholder="Genre" placeholderTextColor={colors.textFaint} value={genre} onChangeText={setGenre} />
+                <TextInput style={styles.input} placeholder="Topic" placeholderTextColor={colors.textFaint} value={topic} onChangeText={setTopic} />
+                <TextInput style={styles.input} placeholder="Host" placeholderTextColor={colors.textFaint} value={host} onChangeText={setHost} />
+                <TextInput style={styles.input} placeholder="Guest" placeholderTextColor={colors.textFaint} value={guest} onChangeText={setGuest} />
+                <TextInput style={styles.input} placeholder="Episode URL" placeholderTextColor={colors.textFaint} value={url} onChangeText={setUrl} autoCapitalize="none" />
+              </ScrollView>
             </View>
-            <ScrollView style={{ maxHeight: 400 }} contentContainerStyle={{ gap: 12 }}>
-              <TextInput style={styles.input} placeholder="Episode title" placeholderTextColor={colors.textFaint} value={title} onChangeText={setTitle} />
-              <TextInput style={styles.input} placeholder="Channel" placeholderTextColor={colors.textFaint} value={channel} onChangeText={setChannel} />
-              <TextInput style={styles.input} placeholder="Genre" placeholderTextColor={colors.textFaint} value={genre} onChangeText={setGenre} />
-              <TextInput style={styles.input} placeholder="Topic" placeholderTextColor={colors.textFaint} value={topic} onChangeText={setTopic} />
-              <TextInput style={styles.input} placeholder="Host" placeholderTextColor={colors.textFaint} value={host} onChangeText={setHost} />
-              <TextInput style={styles.input} placeholder="Guest" placeholderTextColor={colors.textFaint} value={guest} onChangeText={setGuest} />
-              <TextInput style={styles.input} placeholder="Episode URL" placeholderTextColor={colors.textFaint} value={url} onChangeText={setUrl} autoCapitalize="none" />
-            </ScrollView>
-          </View>
+          </KeyboardAvoidingView>
         </View>
       </Modal>
     </View>

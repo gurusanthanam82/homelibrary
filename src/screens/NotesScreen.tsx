@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
-  StyleSheet, Modal, Alert, Linking,
+  StyleSheet, Modal, Alert, Linking, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radii, buddyColors } from '../theme';
@@ -19,6 +19,7 @@ export default function NotesScreen() {
   const [draftText, setDraftText] = useState('');
   const [draftBook, setDraftBook] = useState('');
   const [draftPage, setDraftPage] = useState('');
+  const noteInputRef = useRef<TextInput>(null);
 
   const q = query.toLowerCase();
   const filtered = data.notes.filter((n) => n.text.toLowerCase().includes(q) || n.book.toLowerCase().includes(q));
@@ -125,28 +126,36 @@ export default function NotesScreen() {
         ))}
       </ScrollView>
 
-      <Modal visible={composerOpen} transparent animationType="slide" onRequestClose={() => setComposerOpen(false)}>
+      <Modal
+        visible={composerOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setComposerOpen(false)}
+        onShow={() => setTimeout(() => noteInputRef.current?.focus(), 250)}
+      >
         <View style={styles.modalScrim}>
-          <View style={styles.modalSheet}>
-            <View style={styles.handle} />
-            <Text style={styles.sheetTitle}>{editingId ? 'Edit note' : 'New note'}</Text>
-            <TextInput
-              style={styles.noteInput}
-              placeholder="What's worth remembering?"
-              placeholderTextColor={colors.textFaint}
-              value={draftText}
-              onChangeText={setDraftText}
-              multiline
-              autoFocus
-            />
-            <View style={styles.row}>
-              <TextInput style={[styles.input, { flex: 1 }]} placeholder="Book title" placeholderTextColor={colors.textFaint} value={draftBook} onChangeText={setDraftBook} />
-              <TextInput style={[styles.input, { width: 90 }]} placeholder="Page" placeholderTextColor={colors.textFaint} value={draftPage} onChangeText={setDraftPage} keyboardType="numeric" />
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+            <View style={styles.modalSheet}>
+              <View style={styles.handle} />
+              <Text style={styles.sheetTitle}>{editingId ? 'Edit note' : 'New note'}</Text>
+              <TextInput
+                ref={noteInputRef}
+                style={styles.noteInput}
+                placeholder="What's worth remembering?"
+                placeholderTextColor={colors.textFaint}
+                value={draftText}
+                onChangeText={setDraftText}
+                multiline
+              />
+              <View style={styles.row}>
+                <TextInput style={[styles.input, { flex: 1 }]} placeholder="Book title" placeholderTextColor={colors.textFaint} value={draftBook} onChangeText={setDraftBook} />
+                <TextInput style={[styles.input, { width: 90 }]} placeholder="Page" placeholderTextColor={colors.textFaint} value={draftPage} onChangeText={setDraftPage} keyboardType="numeric" />
+              </View>
+              <TouchableOpacity style={styles.saveBtn} onPress={saveNote}>
+                <Text style={styles.saveBtnText}>Save note</Text>
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity style={styles.saveBtn} onPress={saveNote}>
-              <Text style={styles.saveBtnText}>Save note</Text>
-            </TouchableOpacity>
-          </View>
+          </KeyboardAvoidingView>
         </View>
       </Modal>
 

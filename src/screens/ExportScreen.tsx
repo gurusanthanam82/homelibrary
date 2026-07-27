@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, Modal, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, Modal, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
@@ -117,57 +117,61 @@ export default function ExportScreen() {
       <Modal visible={driveOpen} transparent animationType="slide" onRequestClose={() => setDriveOpen(false)}>
         <View style={styles.modalScrim}>
           <TouchableOpacity style={{ flex: 1 }} onPress={() => setDriveOpen(false)} />
-          <View style={styles.modalSheet}>
-            <View style={styles.handle} />
-            <Text style={styles.sheetTitle}>Google Drive Backup</Text>
-            <Text style={styles.fieldLabel}>Google Drive Folder URL</Text>
-            <TextInput style={styles.input} placeholder="https://drive.google.com/drive/folders/…" placeholderTextColor={colors.textFaint} value={data.driveFolderUrl} onChangeText={setDriveFolderUrl} />
-            <Text style={styles.fieldLabel}>Auto-backup Frequency</Text>
-            <View style={{ flexDirection: 'row', gap: 8 }}>
-              {FREQS.map((f) => (
-                <TouchableOpacity key={f} style={[styles.freqChip, data.driveFreq === f && styles.freqChipActive]} onPress={() => setDriveFreq(f)}>
-                  <Text style={[styles.freqChipText, data.driveFreq === f && styles.freqChipTextActive]}>{f}</Text>
-                </TouchableOpacity>
-              ))}
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+            <View style={styles.modalSheet}>
+              <View style={styles.handle} />
+              <Text style={styles.sheetTitle}>Google Drive Backup</Text>
+              <Text style={styles.fieldLabel}>Google Drive Folder URL</Text>
+              <TextInput style={styles.input} placeholder="https://drive.google.com/drive/folders/…" placeholderTextColor={colors.textFaint} value={data.driveFolderUrl} onChangeText={setDriveFolderUrl} />
+              <Text style={styles.fieldLabel}>Auto-backup Frequency</Text>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                {FREQS.map((f) => (
+                  <TouchableOpacity key={f} style={[styles.freqChip, data.driveFreq === f && styles.freqChipActive]} onPress={() => setDriveFreq(f)}>
+                    <Text style={[styles.freqChipText, data.driveFreq === f && styles.freqChipTextActive]}>{f}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <TouchableOpacity style={styles.bigBtn} onPress={() => { backupNow(); setDriveOpen(false); exportCSV(); }}>
+                <Ionicons name="cloud-upload-outline" size={18} color={colors.white} />
+                <Text style={styles.bigBtnText}>Backup All Books Now</Text>
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity style={styles.bigBtn} onPress={() => { backupNow(); setDriveOpen(false); exportCSV(); }}>
-              <Ionicons name="cloud-upload-outline" size={18} color={colors.white} />
-              <Text style={styles.bigBtnText}>Backup All Books Now</Text>
-            </TouchableOpacity>
-          </View>
+          </KeyboardAvoidingView>
         </View>
       </Modal>
 
       <Modal visible={emailOpen} transparent animationType="slide" onRequestClose={() => setEmailOpen(false)}>
         <View style={styles.modalScrim}>
           <TouchableOpacity style={{ flex: 1 }} onPress={() => setEmailOpen(false)} />
-          <View style={styles.modalSheet}>
-            <View style={styles.handle} />
-            <Text style={styles.sheetTitle}>Email Backup</Text>
-            <Text style={styles.fieldLabel}>Delivery Email</Text>
-            <TextInput style={styles.input} placeholder="you@example.com" placeholderTextColor={colors.textFaint} value={data.emailBackupEmail} onChangeText={setEmailBackupEmail} keyboardType="email-address" autoCapitalize="none" />
-            <Text style={styles.fieldLabel}>Schedule</Text>
-            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 14 }}>
-              {FREQS.map((f) => (
-                <TouchableOpacity key={f} style={[styles.freqChip, data.emailBackupFreq === f && styles.freqChipActive]} onPress={() => setEmailBackupFreq(f)}>
-                  <Text style={[styles.freqChipText, data.emailBackupFreq === f && styles.freqChipTextActive]}>{f}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-            <View style={styles.toggleRow}>
-              <View>
-                <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text }}>Auto-send enabled</Text>
-                <Text style={{ fontSize: 11, color: colors.textMuted, fontWeight: '600' }}>Send backup on schedule automatically</Text>
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+            <View style={styles.modalSheet}>
+              <View style={styles.handle} />
+              <Text style={styles.sheetTitle}>Email Backup</Text>
+              <Text style={styles.fieldLabel}>Delivery Email</Text>
+              <TextInput style={styles.input} placeholder="you@example.com" placeholderTextColor={colors.textFaint} value={data.emailBackupEmail} onChangeText={setEmailBackupEmail} keyboardType="email-address" autoCapitalize="none" />
+              <Text style={styles.fieldLabel}>Schedule</Text>
+              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 14 }}>
+                {FREQS.map((f) => (
+                  <TouchableOpacity key={f} style={[styles.freqChip, data.emailBackupFreq === f && styles.freqChipActive]} onPress={() => setEmailBackupFreq(f)}>
+                    <Text style={[styles.freqChipText, data.emailBackupFreq === f && styles.freqChipTextActive]}>{f}</Text>
+                  </TouchableOpacity>
+                ))}
               </View>
-              <TouchableOpacity style={[styles.toggle, data.emailBackupEnabled && styles.toggleOn]} onPress={toggleEmailBackup}>
-                <View style={[styles.toggleDot, data.emailBackupEnabled && styles.toggleDotOn]} />
+              <View style={styles.toggleRow}>
+                <View>
+                  <Text style={{ fontSize: 14, fontWeight: '700', color: colors.text }}>Auto-send enabled</Text>
+                  <Text style={{ fontSize: 11, color: colors.textMuted, fontWeight: '600' }}>Send backup on schedule automatically</Text>
+                </View>
+                <TouchableOpacity style={[styles.toggle, data.emailBackupEnabled && styles.toggleOn]} onPress={toggleEmailBackup}>
+                  <View style={[styles.toggleDot, data.emailBackupEnabled && styles.toggleDotOn]} />
+                </TouchableOpacity>
+              </View>
+              <TouchableOpacity style={styles.bigBtn} onPress={() => { sendEmailBackupNow(); setEmailOpen(false); exportCSV(); }}>
+                <Ionicons name="send-outline" size={18} color={colors.white} />
+                <Text style={styles.bigBtnText}>Send Backup Now</Text>
               </TouchableOpacity>
             </View>
-            <TouchableOpacity style={styles.bigBtn} onPress={() => { sendEmailBackupNow(); setEmailOpen(false); exportCSV(); }}>
-              <Ionicons name="send-outline" size={18} color={colors.white} />
-              <Text style={styles.bigBtnText}>Send Backup Now</Text>
-            </TouchableOpacity>
-          </View>
+          </KeyboardAvoidingView>
         </View>
       </Modal>
     </ScrollView>

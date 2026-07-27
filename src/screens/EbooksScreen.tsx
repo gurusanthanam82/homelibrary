@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Modal, TextInput, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Modal, TextInput, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -102,40 +102,44 @@ export default function EbooksScreen() {
 
       <Modal visible={confirmOpen} transparent animationType="slide" onRequestClose={() => setConfirmOpen(false)}>
         <View style={styles.modalScrim}>
-          <View style={styles.modalSheet}>
-            <View style={styles.handle} />
-            <View style={styles.modalHeader}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.sheetTitle}>Add E-Book</Text>
-                <Text style={styles.subtitle} numberOfLines={1}>{pending?.name} · {pending?.size}</Text>
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+            <View style={styles.modalSheet}>
+              <View style={styles.handle} />
+              <View style={styles.modalHeader}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.sheetTitle}>Add E-Book</Text>
+                  <Text style={styles.subtitle} numberOfLines={1}>{pending?.name} · {pending?.size}</Text>
+                </View>
+                <TouchableOpacity style={styles.saveBtn} onPress={saveEbook}><Text style={styles.saveBtnText}>Save</Text></TouchableOpacity>
               </View>
-              <TouchableOpacity style={styles.saveBtn} onPress={saveEbook}><Text style={styles.saveBtnText}>Save</Text></TouchableOpacity>
+              <Text style={styles.fieldLabel}>Book title</Text>
+              <TextInput style={styles.input} value={bookTitle} onChangeText={setBookTitle} placeholder="Book title" placeholderTextColor={colors.textFaint} />
             </View>
-            <Text style={styles.fieldLabel}>Book title</Text>
-            <TextInput style={styles.input} value={bookTitle} onChangeText={setBookTitle} placeholder="Book title" placeholderTextColor={colors.textFaint} />
-          </View>
+          </KeyboardAvoidingView>
         </View>
       </Modal>
 
       <Modal visible={manualOpen} transparent animationType="slide" onRequestClose={() => setManualOpen(false)}>
         <View style={styles.modalScrim}>
-          <View style={styles.modalSheet}>
-            <View style={styles.handle} />
-            <Text style={styles.sheetTitle}>Add e-book manually</Text>
-            <Text style={styles.fieldLabel}>Book title</Text>
-            <TextInput style={styles.input} value={bookTitle} onChangeText={setBookTitle} placeholder="Book title" placeholderTextColor={colors.textFaint} />
-            <TouchableOpacity
-              style={styles.bigBtn}
-              onPress={() => {
-                if (!bookTitle.trim()) { Alert.alert('Title required'); return; }
-                addEbook({ name: `${bookTitle}.pdf`, bookTitle, format: 'PDF', size: '—', color: buddyColors[data.ebooks.length % buddyColors.length], content: '' });
-                setBookTitle('');
-                setManualOpen(false);
-              }}
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+            <View style={styles.modalSheet}>
+              <View style={styles.handle} />
+              <Text style={styles.sheetTitle}>Add e-book manually</Text>
+              <Text style={styles.fieldLabel}>Book title</Text>
+              <TextInput style={styles.input} value={bookTitle} onChangeText={setBookTitle} placeholder="Book title" placeholderTextColor={colors.textFaint} />
+              <TouchableOpacity
+                style={styles.bigBtn}
+                onPress={() => {
+                  if (!bookTitle.trim()) { Alert.alert('Title required'); return; }
+                  addEbook({ name: `${bookTitle}.pdf`, bookTitle, format: 'PDF', size: '—', color: buddyColors[data.ebooks.length % buddyColors.length], content: '' });
+                  setBookTitle('');
+                  setManualOpen(false);
+                }}
             >
-              <Text style={styles.bigBtnText}>Add</Text>
-            </TouchableOpacity>
-          </View>
+                <Text style={styles.bigBtnText}>Add</Text>
+              </TouchableOpacity>
+            </View>
+          </KeyboardAvoidingView>
         </View>
       </Modal>
     </View>

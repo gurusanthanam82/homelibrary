@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
-  StyleSheet, Modal, Alert, Linking, Share,
+  StyleSheet, Modal, Alert, Linking, Share, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -20,6 +20,7 @@ export default function BuddiesScreen() {
   const [shelfBuddy, setShelfBuddy] = useState<Buddy | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteName, setInviteName] = useState('');
+  const inviteInputRef = useRef<TextInput>(null);
 
   const q = query.toLowerCase();
   const active = data.buddies.filter((b) => !b.blocked && b.name.toLowerCase().includes(q));
@@ -94,16 +95,24 @@ export default function BuddiesScreen() {
         )}
       </ScrollView>
 
-      <Modal visible={inviteOpen} transparent animationType="slide" onRequestClose={() => setInviteOpen(false)}>
+      <Modal
+        visible={inviteOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setInviteOpen(false)}
+        onShow={() => setTimeout(() => inviteInputRef.current?.focus(), 250)}
+      >
         <View style={styles.modalScrim}>
-          <View style={styles.modalSheet}>
-            <View style={styles.handle} />
-            <Text style={styles.sheetTitle}>Invite a buddy</Text>
-            <TextInput style={styles.inviteInput} placeholder="Name" placeholderTextColor={colors.textFaint} value={inviteName} onChangeText={setInviteName} autoFocus />
-            <TouchableOpacity style={styles.saveInviteBtn} onPress={saveInvite}>
-              <Text style={styles.saveInviteBtnText}>Add buddy</Text>
-            </TouchableOpacity>
-          </View>
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+            <View style={styles.modalSheet}>
+              <View style={styles.handle} />
+              <Text style={styles.sheetTitle}>Invite a buddy</Text>
+              <TextInput ref={inviteInputRef} style={styles.inviteInput} placeholder="Name" placeholderTextColor={colors.textFaint} value={inviteName} onChangeText={setInviteName} />
+              <TouchableOpacity style={styles.saveInviteBtn} onPress={saveInvite}>
+                <Text style={styles.saveInviteBtnText}>Add buddy</Text>
+              </TouchableOpacity>
+            </View>
+          </KeyboardAvoidingView>
         </View>
       </Modal>
 

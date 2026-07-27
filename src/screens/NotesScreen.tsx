@@ -58,6 +58,11 @@ export default function NotesScreen() {
     setComposerOpen(false);
   }
 
+  function shareMessage(note: Note) {
+    const meta = [note.book, note.page ? `p.${note.page}` : null].filter(Boolean).join(' · ');
+    return meta ? `"${note.text}"\n\n📖 ${meta}` : `"${note.text}"`;
+  }
+
   function shareWith(buddyId: string) {
     if (!shareNoteId) return;
     const note = data.notes.find((n) => n.id === shareNoteId);
@@ -171,7 +176,7 @@ export default function NotesScreen() {
               style={styles.whatsappBtn}
               onPress={() => {
                 const note = data.notes.find((n) => n.id === shareNoteId);
-                Linking.openURL(`whatsapp://send?text=${encodeURIComponent(note?.text ?? '')}`);
+                if (note) Linking.openURL(`whatsapp://send?text=${encodeURIComponent(shareMessage(note))}`);
                 setShareNoteId(null);
               }}
             >

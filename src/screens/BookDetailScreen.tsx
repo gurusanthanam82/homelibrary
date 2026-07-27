@@ -47,7 +47,7 @@ export default function BookDetailScreen() {
   const {
     data, addCustomGenre, addCustomShelf, addEbook, removeEbook,
     monitor, startMonitor, pauseMonitor, resumeMonitor, stopMonitor,
-    getChapters, generateChapters, toggleChapter, markAllChapters,
+    getChapters, generateChapters, deleteChapters, toggleChapter, markAllChapters,
   } = useAppData();
   const [book, setBook] = useState<Book | null>(null);
   const [loading, setLoading] = useState(true);
@@ -175,9 +175,17 @@ export default function BookDetailScreen() {
     if (!book) return;
     setScanState('scanning');
     setTimeout(() => {
-      generateChapters(book.id);
+      generateChapters(book.id, `${book.title}|${book.author}`);
       setScanState('idle');
     }, 1400);
+  }
+
+  function rescanChapters() {
+    if (!book) return;
+    Alert.alert('Rescan chapters', 'This will delete the current chapter list and scan again.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete & Rescan', style: 'destructive', onPress: () => { deleteChapters(book.id); scanChapterIndex(); } },
+    ]);
   }
 
   function handleDelete() {
@@ -493,7 +501,13 @@ export default function BookDetailScreen() {
               <Text style={styles.chaptersHeaderTitle}>Chapters</Text>
               <Text style={styles.chaptersHeaderSub}>{book.title}</Text>
             </View>
-            <View style={{ width: 38 }} />
+            {chapters && scanState === 'idle' ? (
+              <TouchableOpacity style={styles.backBtn} onPress={rescanChapters}>
+                <Ionicons name="refresh" size={18} color={colors.text} />
+              </TouchableOpacity>
+            ) : (
+              <View style={{ width: 38 }} />
+            )}
           </View>
 
           {!chapters && scanState === 'idle' && (

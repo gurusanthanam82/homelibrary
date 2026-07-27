@@ -1,29 +1,68 @@
-import React, { useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
   StyleSheet, Modal, Alert, Linking, Share, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, radii, shadow } from '../theme';
+import { useAuth } from '../contexts/AuthContext';
 import { useAppData } from '../contexts/AppDataContext';
-import type { BuddiesStackParamList, Buddy } from '../types';
+import { getBooks } from '../services/books';
+import type { BuddiesStackParamList, Buddy, Book } from '../types';
 
 type Nav = NativeStackNavigationProp<BuddiesStackParamList>;
 
 export default function BuddiesScreen() {
   const navigation = useNavigation<Nav>();
-  const { data, addBuddy, toggleBlockBuddy } = useAppData();
+  const { session } = useAuth();
+  const { data, addBuddy, toggleBlockBuddy, addNotification } = useAppData();
   const insets = useSafeAreaInsets();
   const [query, setQuery] = useState('');
-  const [shareOpen, setShareOpen] = useState(false);
+  const [shareBuddyId, setShareBuddyId] = useState<string | null>(null);
+  const [shareStep, setShareStep] = useState<'menu' | 'book' | 'shelf'>('menu');
+  const [books, setBooks] = useState<Book[]>([]);
   const [shelfBuddy, setShelfBuddy] = useState<Buddy | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [inviteName, setInviteName] = useState('');
   const [inviteEmail, setInviteEmail] = useState('');
   const inviteInputRef = useRef<TextInput>(null);
+
+  const shareBuddy = data.buddies.find((b) => b.id === shareBuddyId) ?? null;
+  const shelves = Array.from(new Set(books.map((b) => b.shelf?.trim() || 'Unsorted')));
+
+  const loadBooks = useCallback(async () => {
+    if (!session) return;
+    setBooks(await getBooks(session.user.id));
+  }, [session]);
+
+  useFocusEffect(useCallback(() => { loadBooks(); }, [loadBooks]));
+
+  function openShare(buddyId: string) {
+    setShareBuddyId(buddyId);
+    setShareStep('menu');
+  }
+
+  function closeShare() {
+    setShareBuddyId(null);
+    setShareStep('menu');
+  }
+
+  function notifyBook(book: Book) {
+    if (!shareBuddy) return;
+    addNotification(`You shared "${book.title}" with ${shareBuddy.name}.`);
+    Alert.alert('Shared', `"${book.title}" shared with ${shareBuddy.name} via a Stacks notification.`);
+    closeShare();
+  }
+
+  function notifyShelf(shelf: string) {
+    if (!shareBuddy) return;
+    addNotification(`You shared your "${shelf}" shelf with ${shareBuddy.name}.`);
+    Alert.alert('Shared', `Your "${shelf}" shelf was shared with ${shareBuddy.name} via a Stacks notification.`);
+    closeShare();
+  }
 
   const q = query.toLowerCase();
   const active = data.buddies.filter((b) => !b.blocked && b.name.toLowerCase().includes(q));
@@ -85,7 +124,7 @@ export default function BuddiesScreen() {
                     <Text style={styles.shelfBtnText}>Shelf</Text>
                   </TouchableOpacity>
                 )}
-                <TouchableOpacity style={styles.shareBtn} onPress={() => setShareOpen(true)}>
+                <TouchableOpacity style={styles.shareBtn} onPress={() => openShare(b.id)}>
                   <Text style={styles.shareBtnText}>Share</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.blockBtn} onPress={() => toggleBlockBuddy(b.id)}>
@@ -164,34 +203,71 @@ export default function BuddiesScreen() {
         </View>
       </Modal>
 
-      <Modal visible={shareOpen} transparent animationType="slide" onRequestClose={() => setShareOpen(false)}>
+      <Modal visible={!!shareBuddy} transparent animationType="slide" onRequestClose={closeShare}>
         <View style={styles.modalScrim}>
-          <TouchableOpacity style={{ flex: 1 }} onPress={() => setShareOpen(false)} />
+          <TouchableOpacity style={{ flex: 1 }} onPress={closeShare} />
           <View style={styles.modalSheet}>
             <View style={styles.handle} />
-            <Text style={styles.sheetTitle}>Share with a buddy</Text>
-            <View style={styles.shareRow}>
-              <TouchableOpacity style={[styles.shareTile, { backgroundColor: '#25d366' }]} onPress={() => { Linking.openURL('whatsapp://send?text=Check out my library on Stacks!'); setShareOpen(false); }}>
-                <Ionicons name="logo-whatsapp" size={24} color={colors.white} />
-                <Text style={styles.shareTileText}>WhatsApp</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.shareTile, { backgroundColor: colors.teal }]} onPress={() => { Share.share({ message: 'Check out my library on Stacks!' }); setShareOpen(false); }}>
-                <Ionicons name="link-outline" size={24} color={colors.white} />
-                <Text style={styles.shareTileText}>Copy link</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.shareTile, { backgroundColor: colors.dark }]} onPress={() => setShareOpen(false)}>
-                <Text style={{ fontSize: 20, fontWeight: '700', color: colors.white }}>S</Text>
-                <Text style={styles.shareTileText}>In Stacks</Text>
-              </TouchableOpacity>
+            <View style={styles.shareHeaderRow}>
+              <Text style={styles.sheetTitle}>
+                {shareStep === 'menu' ? `Share with ${shareBuddy?.name}` : shareStep === 'book' ? 'Choose a book' : 'Choose a shelf'}
+              </Text>
+              {shareStep !== 'menu' ? (
+                <TouchableOpacity onPress={() => setShareStep('menu')}><Text style={styles.cancelText}>Back</Text></TouchableOpacity>
+              ) : (
+                <TouchableOpacity onPress={closeShare}><Ionicons name="close" size={20} color={colors.text} /></TouchableOpacity>
+              )}
             </View>
-            <Text style={styles.blockedLabel}>Your buddies</Text>
-            {data.buddies.filter((b) => !b.blocked).map((b) => (
-              <TouchableOpacity key={b.id} style={styles.shareBuddyRow} onPress={() => { Alert.alert('Sent', `Shared with ${b.name}.`); setShareOpen(false); }}>
-                <View style={[styles.avatarSm, { backgroundColor: b.color }]}><Text style={styles.avatarText}>{b.name.charAt(0)}</Text></View>
-                <Text style={{ flex: 1, fontSize: 15, fontWeight: '700', color: colors.text }}>{b.name}</Text>
-                <View style={styles.sendBtn}><Text style={styles.sendBtnText}>Send</Text></View>
-              </TouchableOpacity>
-            ))}
+
+            {shareStep === 'menu' && (
+              <>
+                <View style={styles.shareRow}>
+                  <TouchableOpacity style={[styles.shareTile, { backgroundColor: '#25d366' }]} onPress={() => { Linking.openURL('whatsapp://send?text=Check out my library on Stacks!'); closeShare(); }}>
+                    <Ionicons name="logo-whatsapp" size={24} color={colors.white} />
+                    <Text style={styles.shareTileText}>WhatsApp</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.shareTile, { backgroundColor: colors.teal }]} onPress={() => { Share.share({ message: 'Check out my library on Stacks!' }); closeShare(); }}>
+                    <Ionicons name="link-outline" size={24} color={colors.white} />
+                    <Text style={styles.shareTileText}>Copy link</Text>
+                  </TouchableOpacity>
+                </View>
+                <Text style={styles.inviteViaLabel}>Notify within Stacks</Text>
+                <TouchableOpacity style={styles.stacksNotifyRow} onPress={() => setShareStep('book')}>
+                  <View style={styles.stacksNotifyIcon}><Ionicons name="book-outline" size={18} color={colors.maroon} /></View>
+                  <Text style={styles.stacksNotifyText}>Share a book</Text>
+                  <Ionicons name="chevron-forward" size={16} color={colors.textFaint} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.stacksNotifyRow} onPress={() => setShareStep('shelf')}>
+                  <View style={styles.stacksNotifyIcon}><Ionicons name="bookmark-outline" size={18} color={colors.maroon} /></View>
+                  <Text style={styles.stacksNotifyText}>Share a shelf</Text>
+                  <Ionicons name="chevron-forward" size={16} color={colors.textFaint} />
+                </TouchableOpacity>
+              </>
+            )}
+
+            {shareStep === 'book' && (
+              <ScrollView style={{ maxHeight: 380 }} contentContainerStyle={{ gap: 4 }}>
+                {books.length === 0 && <Text style={styles.emptyPickerText}>No books in your library yet.</Text>}
+                {books.map((bk) => (
+                  <TouchableOpacity key={bk.id} style={styles.shareBuddyRow} onPress={() => notifyBook(bk)}>
+                    <Text style={{ flex: 1, fontSize: 15, fontWeight: '700', color: colors.text }} numberOfLines={1}>{bk.title}</Text>
+                    <Text style={{ fontSize: 12, color: colors.textMuted, fontWeight: '600' }} numberOfLines={1}>{bk.author}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            )}
+
+            {shareStep === 'shelf' && (
+              <ScrollView style={{ maxHeight: 380 }} contentContainerStyle={{ gap: 4 }}>
+                {shelves.length === 0 && <Text style={styles.emptyPickerText}>No shelves yet.</Text>}
+                {shelves.map((s) => (
+                  <TouchableOpacity key={s} style={styles.shareBuddyRow} onPress={() => notifyShelf(s)}>
+                    <Ionicons name="bookmark" size={14} color={colors.maroon} />
+                    <Text style={{ flex: 1, fontSize: 15, fontWeight: '700', color: colors.text, marginLeft: 10 }}>{s}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            )}
           </View>
         </View>
       </Modal>
@@ -260,6 +336,12 @@ const styles = StyleSheet.create({
   closeXBtn: { width: 30, height: 30, borderRadius: 15, backgroundColor: colors.chipBg, alignItems: 'center', justifyContent: 'center' },
   inviteInput: { marginTop: 16, borderWidth: 1.5, borderColor: colors.border, borderRadius: radii.md, padding: 13, fontSize: 15, color: colors.text, backgroundColor: colors.card },
   inviteViaLabel: { fontSize: 12, fontWeight: '700', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 18, marginBottom: 4 },
+  shareHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  cancelText: { fontSize: 14, fontWeight: '600', color: colors.textMuted },
+  stacksNotifyRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.borderSoft },
+  stacksNotifyIcon: { width: 34, height: 34, borderRadius: 17, backgroundColor: colors.pinkBg, alignItems: 'center', justifyContent: 'center' },
+  stacksNotifyText: { flex: 1, fontSize: 15, fontWeight: '700', color: colors.text },
+  emptyPickerText: { color: colors.textMuted, fontWeight: '600', paddingVertical: 16, textAlign: 'center' },
   saveInviteBtn: { marginTop: 16, backgroundColor: colors.chipBg, padding: 16, borderRadius: radii.lg, alignItems: 'center' },
   saveInviteBtnText: { color: colors.text, fontWeight: '700', fontSize: 15 },
   shareRow: { flexDirection: 'row', gap: 12, marginTop: 18 },

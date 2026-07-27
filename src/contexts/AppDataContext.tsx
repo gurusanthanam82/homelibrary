@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { buddyColors } from '../theme';
 import { SAMPLE_BUDDIES, SAMPLE_NOTES, SAMPLE_PODCASTS, SAMPLE_PROFILE } from '../sampleData';
-import type { Buddy, Note, Podcast, Ebook, Profile, Chapter } from '../types';
+import type { Buddy, Note, Podcast, Ebook, Profile, Chapter, AppNotification } from '../types';
 
 const STORAGE_KEY = 'home-library:app-data:v3';
 
@@ -18,6 +18,7 @@ type AppData = {
   customShelves: string[];
   chapters: Record<string, Chapter[]>;
   chapterPhotos: Record<string, string[]>;
+  notifications: AppNotification[];
   driveFolderUrl: string;
   driveFreq: 'Daily' | 'Weekly' | 'Monthly';
   driveLastBackup: string;
@@ -37,6 +38,7 @@ const defaultData: AppData = {
   customShelves: [],
   chapters: {},
   chapterPhotos: {},
+  notifications: [],
   driveFolderUrl: '',
   driveFreq: 'Weekly',
   driveLastBackup: 'Never',
@@ -56,6 +58,7 @@ const blankData: AppData = {
   customShelves: [],
   chapters: {},
   chapterPhotos: {},
+  notifications: [],
   driveFolderUrl: '',
   driveFreq: 'Weekly',
   driveLastBackup: 'Never',
@@ -102,6 +105,9 @@ type AppDataContextType = {
   removeChapterAt: (bookId: string, index: number) => void;
   addChapterPhoto: (bookId: string, uri: string) => void;
   removeChapterPhoto: (bookId: string, index: number) => void;
+  addNotification: (message: string) => void;
+  markNotificationRead: (id: string) => void;
+  markAllNotificationsRead: () => void;
   deleteChapters: (bookId: string) => void;
   toggleChapter: (bookId: string, index: number) => void;
   markAllChapters: (bookId: string, read: boolean) => void;
@@ -282,6 +288,19 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     persist({ ...data, chapterPhotos: { ...data.chapterPhotos, [bookId]: list.filter((_, i) => i !== index) } });
   };
 
+  const addNotification = (message: string) => {
+    const notification: AppNotification = { id: `notif${Date.now()}`, message, createdAt: new Date().toISOString(), read: false };
+    persist({ ...data, notifications: [notification, ...data.notifications] });
+  };
+
+  const markNotificationRead = (id: string) => {
+    persist({ ...data, notifications: data.notifications.map((n) => (n.id === id ? { ...n, read: true } : n)) });
+  };
+
+  const markAllNotificationsRead = () => {
+    persist({ ...data, notifications: data.notifications.map((n) => ({ ...n, read: true })) });
+  };
+
   const deleteChapters = (bookId: string) => {
     const next = { ...data.chapters };
     delete next[bookId];
@@ -338,6 +357,9 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
         removeChapterAt,
         addChapterPhoto,
         removeChapterPhoto,
+        addNotification,
+        markNotificationRead,
+        markAllNotificationsRead,
         deleteChapters,
         toggleChapter,
         markAllChapters,

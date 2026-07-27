@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
-  StyleSheet, Image, ActivityIndicator, Alert,
+  StyleSheet, Image, ActivityIndicator, Alert, Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -23,12 +23,14 @@ type Nav = NativeStackNavigationProp<HomeStackParamList>;
 
 export default function HomeScreen() {
   const { session, signOut } = useAuth();
-  const { data } = useAppData();
+  const { data, markNotificationRead, markAllNotificationsRead } = useAppData();
   const navigation = useNavigation<Nav>();
   const insets = useSafeAreaInsets();
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [notifOpen, setNotifOpen] = useState(false);
+  const unreadCount = data.notifications.filter((n) => !n.read).length;
 
   const load = useCallback(async () => {
     if (!session) return;
@@ -101,6 +103,7 @@ export default function HomeScreen() {
   if (loading) return <ActivityIndicator style={{ flex: 1, backgroundColor: colors.bg }} size="large" color={colors.maroon} />;
 
   return (
+    <>
     <ScrollView style={styles.container} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: insets.top + 16, paddingBottom: 40 }}>
       <View style={styles.headerRow}>
         <TouchableOpacity style={styles.profileRow} onPress={() => (navigation as any).getParent()?.getParent()?.navigate('Profile')}>
@@ -116,9 +119,19 @@ export default function HomeScreen() {
             </View>
           </View>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.logoutBtn} onPress={handleSignOut}>
-          <Ionicons name="log-out-outline" size={22} color={colors.maroon} />
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <TouchableOpacity style={styles.logoutBtn} onPress={() => setNotifOpen(true)}>
+            <Ionicons name="notifications-outline" size={20} color={colors.maroon} />
+            {unreadCount > 0 && (
+              <View style={styles.notifBadge}>
+                <Text style={styles.notifBadgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.logoutBtn} onPress={handleSignOut}>
+            <Ionicons name="log-out-outline" size={22} color={colors.maroon} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.searchBox}>
@@ -303,6 +316,45 @@ export default function HomeScreen() {
         </>
       )}
     </ScrollView>
+
+    <Modal visible={notifOpen} transparent animationType="slide" onRequestClose={() => setNotifOpen(false)}>
+      <View style={styles.modalScrim}>
+        <TouchableOpacity style={{ flex: 1 }} onPress={() => setNotifOpen(false)} />
+        <View style={styles.modalSheet}>
+          <View style={styles.handle} />
+          <View style={styles.notifHeaderRow}>
+            <Text style={styles.notifSheetTitle}>Notifications</Text>
+            {unreadCount > 0 && (
+              <TouchableOpacity onPress={markAllNotificationsRead}>
+                <Text style={styles.markAllText}>Mark all read</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+          <ScrollView style={{ maxHeight: 420 }} contentContainerStyle={{ gap: 2 }}>
+            {data.notifications.length === 0 && (
+              <View style={{ alignItems: 'center', paddingVertical: 40 }}>
+                <Ionicons name="notifications-outline" size={40} color={colors.textFaint} />
+                <Text style={{ marginTop: 10, color: colors.textMuted, fontWeight: '600' }}>No notifications yet</Text>
+              </View>
+            )}
+            {data.notifications.map((n) => (
+              <TouchableOpacity
+                key={n.id}
+                style={styles.notifRow}
+                onPress={() => markNotificationRead(n.id)}
+              >
+                {!n.read && <View style={styles.notifDot} />}
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.notifMessage, !n.read && { fontWeight: '700' }]}>{n.message}</Text>
+                  <Text style={styles.notifTime}>{new Date(n.createdAt).toLocaleString()}</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+    </>
   );
 }
 
@@ -315,6 +367,22 @@ const styles = StyleSheet.create({
     borderWidth: 1.5, borderColor: colors.border, alignItems: 'center', justifyContent: 'center',
     ...shadow.chip,
   },
+  notifBadge: {
+    position: 'absolute', top: -4, right: -4, minWidth: 17, height: 17, borderRadius: 9,
+    backgroundColor: colors.coral, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3,
+    borderWidth: 1.5, borderColor: colors.bg,
+  },
+  notifBadgeText: { color: colors.white, fontSize: 9, fontWeight: '700' },
+  modalScrim: { flex: 1, backgroundColor: 'rgba(27,23,20,0.5)', justifyContent: 'flex-end' },
+  modalSheet: { backgroundColor: colors.bg, borderTopLeftRadius: radii.sheet, borderTopRightRadius: radii.sheet, padding: 20, paddingBottom: 30, ...shadow.dark },
+  handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: colors.border, alignSelf: 'center', marginBottom: 16 },
+  notifHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
+  notifSheetTitle: { fontSize: 18, fontWeight: '700', color: colors.text },
+  markAllText: { fontSize: 13, fontWeight: '700', color: colors.maroon },
+  notifRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.borderSoft },
+  notifDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.coral, marginTop: 6 },
+  notifMessage: { fontSize: 14, color: colors.text, lineHeight: 20 },
+  notifTime: { fontSize: 11, color: colors.textFaint, fontWeight: '600', marginTop: 3 },
   avatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.maroon, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   avatarImg: { width: 48, height: 48, borderRadius: 24 },
   avatarText: { color: colors.white, fontWeight: '700', fontSize: 20 },

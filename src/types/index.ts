@@ -71,6 +71,13 @@ export type Ebook = {
   content: string;
 };
 
+export type AppNotification = {
+  id: string;
+  message: string;
+  createdAt: string;
+  read: boolean;
+};
+
 export type Profile = {
   name: string;
   email: string;

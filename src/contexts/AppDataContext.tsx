@@ -73,6 +73,7 @@ type AppDataContextType = {
   addBuddy: (name: string) => void;
   toggleBlockBuddy: (id: string) => void;
   toggleShelfSharing: (id: string) => void;
+  setAllShelfSharing: (enabled: boolean) => void;
   addNote: (note: Omit<Note, 'id' | 'createdAt'>) => void;
   updateNote: (id: string, updates: Partial<Note>) => void;
   deleteNote: (id: string) => void;
@@ -162,6 +163,13 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     persist({
       ...data,
       buddies: data.buddies.map((b) => (b.id === id ? { ...b, hasSharedShelf: !b.hasSharedShelf } : b)),
+    });
+  };
+
+  const setAllShelfSharing = (enabled: boolean) => {
+    persist({
+      ...data,
+      buddies: data.buddies.map((b) => (b.blocked ? b : { ...b, hasSharedShelf: enabled })),
     });
   };
 
@@ -301,6 +309,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
         addBuddy,
         toggleBlockBuddy,
         toggleShelfSharing,
+        setAllShelfSharing,
         addNote,
         updateNote,
         deleteNote,

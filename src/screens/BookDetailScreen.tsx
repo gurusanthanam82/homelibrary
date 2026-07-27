@@ -12,7 +12,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  colors, radii, genreColor, statusColors, statusLabels, ownershipColors,
+  colors, radii, shadow, genreColor, statusColors, statusLabels, ownershipColors,
   GENRES as BASE_GENRES, shelves as BASE_SHELVES,
 } from '../theme';
 import { getBook, deleteBook, updateBook } from '../services/books';
@@ -260,14 +260,18 @@ export default function BookDetailScreen() {
       <View style={{ paddingHorizontal: 20 }}>
         <View style={styles.coverRow}>
           <View style={styles.coverCol}>
-            <View style={styles.coverBoxDashed}>
+            <TouchableOpacity
+              style={styles.coverBoxDashed}
+              activeOpacity={book.cover_url ? 0.8 : 1}
+              onPress={() => book.cover_url && setViewingPhoto(book.cover_url)}
+            >
               {book.cover_url ? <Image source={{ uri: book.cover_url }} style={styles.coverImg} /> : (
                 <>
                   <Ionicons name="image-outline" size={28} color={colors.textFaint} />
                   <Text style={styles.coverPlaceholderText}>Front cover</Text>
                 </>
               )}
-            </View>
+            </TouchableOpacity>
             <Text style={styles.coverLabel}>Front</Text>
             <TouchableOpacity style={styles.cameraBtn} onPress={() => captureCover('front')}>
               <Ionicons name="camera-outline" size={14} color={colors.white} />
@@ -275,14 +279,18 @@ export default function BookDetailScreen() {
             </TouchableOpacity>
           </View>
           <View style={styles.coverCol}>
-            <View style={styles.coverBoxDashed}>
+            <TouchableOpacity
+              style={styles.coverBoxDashed}
+              activeOpacity={book.back_cover_url ? 0.8 : 1}
+              onPress={() => book.back_cover_url && setViewingPhoto(book.back_cover_url)}
+            >
               {book.back_cover_url ? <Image source={{ uri: book.back_cover_url }} style={styles.coverImg} /> : (
                 <>
                   <Ionicons name="image-outline" size={28} color={colors.textFaint} />
                   <Text style={styles.coverPlaceholderText}>Back cover</Text>
                 </>
               )}
-            </View>
+            </TouchableOpacity>
             <Text style={styles.coverLabel}>Back</Text>
             <TouchableOpacity style={styles.cameraBtn} onPress={() => captureCover('back')}>
               <Ionicons name="camera-outline" size={14} color={colors.white} />
@@ -654,12 +662,14 @@ const styles = StyleSheet.create({
   backBtn: {
     width: 40, height: 40, borderRadius: radii.md, backgroundColor: colors.card,
     borderWidth: 1.5, borderColor: colors.border, alignItems: 'center', justifyContent: 'center',
+    ...shadow.chip,
   },
   coverRow: { flexDirection: 'row', justifyContent: 'center', gap: 12 },
   coverCol: { alignItems: 'center', gap: 6 },
   coverBoxDashed: {
     width: 114, height: 160, borderRadius: 9, borderWidth: 1.5, borderColor: colors.border, borderStyle: 'dashed',
     alignItems: 'center', justifyContent: 'center', overflow: 'hidden', gap: 6,
+    ...shadow.chip,
   },
   coverImg: { width: '100%', height: '100%' },
   coverPlaceholderText: { fontSize: 11, color: colors.textFaint, fontWeight: '600' },
@@ -678,7 +688,7 @@ const styles = StyleSheet.create({
   progressTrack: { height: 6, borderRadius: 3, backgroundColor: colors.chipBg, overflow: 'hidden' },
   progressFill: { height: '100%', backgroundColor: colors.maroon, borderRadius: 3 },
   progressLabel: { fontSize: 11, color: colors.textMuted, fontWeight: '700', marginTop: 5 },
-  infoCard: { backgroundColor: colors.card, borderWidth: 1.5, borderColor: colors.border, borderRadius: radii.xl, paddingHorizontal: 18, marginTop: 18 },
+  infoCard: { backgroundColor: colors.card, borderWidth: 1.5, borderColor: colors.border, borderRadius: radii.xl, paddingHorizontal: 18, marginTop: 18, ...shadow.card },
   infoRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.borderSoft },
   infoRowWrap: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 10, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.borderSoft },
   infoValRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
@@ -690,7 +700,7 @@ const styles = StyleSheet.create({
   miniChipText: { fontSize: 12, fontWeight: '700', color: colors.text },
   plusChip: { backgroundColor: '#fff1ec', paddingHorizontal: 9, paddingVertical: 4, borderRadius: 12 },
   plusChipText: { fontSize: 12, fontWeight: '700', color: colors.maroon },
-  mediaCard: { marginTop: 16, backgroundColor: colors.bg, borderWidth: 1.5, borderColor: colors.border, borderRadius: radii.lg, overflow: 'hidden' },
+  mediaCard: { marginTop: 16, backgroundColor: colors.bg, borderWidth: 1.5, borderColor: colors.border, borderRadius: radii.lg, overflow: 'hidden', ...shadow.chip },
   mediaSection: { padding: 13 },
   mediaHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   mediaHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
@@ -711,7 +721,7 @@ const styles = StyleSheet.create({
   ebookReadBtn: { backgroundColor: colors.pinkBg, borderWidth: 1, borderColor: colors.pinkBorder, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 9 },
   ebookReadBtnText: { fontSize: 11, fontWeight: '700', color: colors.maroon },
   ebookRemoveBtn: { width: 28, height: 28, borderRadius: 8, backgroundColor: '#fff0ee', alignItems: 'center', justifyContent: 'center' },
-  sessionCard: { marginTop: 8, backgroundColor: colors.dark, borderRadius: radii.xl, padding: 18 },
+  sessionCard: { marginTop: 8, backgroundColor: colors.dark, borderRadius: radii.xl, padding: 18, ...shadow.dark },
   sessionTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   sessionLabel: { fontSize: 12, color: colors.textFaint, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
   sessionSub: { fontSize: 12, color: colors.coral, fontWeight: '700', marginTop: 3 },
@@ -720,7 +730,7 @@ const styles = StyleSheet.create({
   sessionBtnText: { color: colors.white, fontWeight: '700', fontSize: 15 },
   sessionStopBtn: { marginTop: 8, alignItems: 'center', padding: 8 },
   sessionStopBtnText: { color: colors.textFaint, fontWeight: '700', fontSize: 12 },
-  chaptersRow: { marginTop: 8, backgroundColor: colors.card, borderWidth: 1.5, borderColor: colors.border, borderRadius: radii.lg, padding: 13, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  chaptersRow: { marginTop: 8, backgroundColor: colors.card, borderWidth: 1.5, borderColor: colors.border, borderRadius: radii.lg, padding: 13, flexDirection: 'row', alignItems: 'center', gap: 12, ...shadow.chip },
   chaptersIcon: { width: 34, height: 34, borderRadius: radii.sm, backgroundColor: colors.pinkBg, alignItems: 'center', justifyContent: 'center' },
   chaptersTitle: { fontSize: 14, fontWeight: '700', color: colors.text },
   chaptersSub: { fontSize: 12, color: colors.textMuted, fontWeight: '600', marginTop: 1 },

@@ -7,7 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, radii } from '../theme';
+import { colors, radii, shadow } from '../theme';
 import { useAuth } from '../contexts/AuthContext';
 import { useAppData } from '../contexts/AppDataContext';
 import { getBooks } from '../services/books';
@@ -313,6 +313,7 @@ const styles = StyleSheet.create({
   logoutBtn: {
     width: 38, height: 38, borderRadius: radii.md, backgroundColor: colors.card,
     borderWidth: 1.5, borderColor: colors.border, alignItems: 'center', justifyContent: 'center',
+    ...shadow.chip,
   },
   avatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.maroon, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   avatarImg: { width: 48, height: 48, borderRadius: 24 },
@@ -324,11 +325,13 @@ const styles = StyleSheet.create({
   searchBox: {
     flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: colors.card,
     borderWidth: 1.5, borderColor: colors.border, borderRadius: radii.lg, padding: 12, marginTop: 16,
+    ...shadow.chip,
   },
   searchInput: { flex: 1, fontSize: 14, color: colors.text },
   searchResults: {
     backgroundColor: colors.card, borderWidth: 1.5, borderColor: colors.border,
     borderRadius: radii.xl, marginTop: 4, overflow: 'hidden',
+    ...shadow.card,
   },
   emptySearch: { padding: 18, textAlign: 'center', fontSize: 13, color: colors.textMuted, fontWeight: '500' },
   searchRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderTopWidth: 1, borderTopColor: colors.borderSoft },
@@ -339,6 +342,7 @@ const styles = StyleSheet.create({
   shelfChip: {
     flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: colors.pinkBg,
     paddingHorizontal: 13, paddingVertical: 8, borderRadius: radii.md,
+    ...shadow.chip,
   },
   shelfChipText: { fontSize: 13, fontWeight: '700', color: colors.maroon },
   shelfChipCount: { backgroundColor: colors.white, borderRadius: 8, paddingHorizontal: 7, paddingVertical: 1 },
@@ -346,12 +350,14 @@ const styles = StyleSheet.create({
   streakCard: {
     marginTop: 18, backgroundColor: colors.dark, borderRadius: radii.xxl, padding: 18,
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    ...shadow.dark,
   },
   streakLabel: { fontSize: 13, color: colors.textFaint, fontWeight: '500' },
   streakValue: { fontSize: 26, fontWeight: '700', color: colors.white, marginTop: 2 },
   trackerCard: {
     marginTop: 14, backgroundColor: colors.card, borderWidth: 1.5, borderColor: colors.border,
     borderRadius: radii.xxl, padding: 18,
+    ...shadow.card,
   },
   trackerHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
   trackerTitle: { fontSize: 14, fontWeight: '700', color: colors.text },
@@ -363,17 +369,18 @@ const styles = StyleSheet.create({
   hoursCard: {
     marginTop: 14, flexDirection: 'row', alignItems: 'center', gap: 11,
     backgroundColor: colors.dark, borderRadius: radii.xl, padding: 16,
+    ...shadow.dark,
   },
   hoursIcon: { width: 40, height: 40, borderRadius: radii.md, backgroundColor: 'rgba(255,122,92,0.22)', alignItems: 'center', justifyContent: 'center' },
   hoursLabel: { fontSize: 12, color: colors.textFaint, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
   hoursSub: { fontSize: 12, color: '#8c8378', fontWeight: '600', marginTop: 2 },
   hoursValue: { fontSize: 24, fontWeight: '700', color: colors.white },
   hoursGrid: { flexDirection: 'row', gap: 8, marginTop: 10 },
-  hoursGridItem: { flex: 1, backgroundColor: colors.card, borderWidth: 1.5, borderColor: colors.border, borderRadius: 13, paddingVertical: 12, alignItems: 'center' },
+  hoursGridItem: { flex: 1, backgroundColor: colors.card, borderWidth: 1.5, borderColor: colors.border, borderRadius: 13, paddingVertical: 12, alignItems: 'center', ...shadow.chip },
   hoursGridNum: { fontSize: 15, fontWeight: '700', color: colors.text },
   hoursGridLabel: { fontSize: 10, color: colors.textMuted, fontWeight: '700', marginTop: 5, textTransform: 'uppercase', letterSpacing: 0.4 },
   actionsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14, marginTop: 18 },
-  actionTile: { width: '47%', borderRadius: radii.xl, padding: 18, minHeight: 120, justifyContent: 'space-between' },
+  actionTile: { width: '47%', borderRadius: radii.xl, padding: 18, minHeight: 120, justifyContent: 'space-between', ...shadow.card },
   actionTitle: { fontSize: 17, fontWeight: '700', color: colors.white },
   actionSub: { fontSize: 12, color: colors.white, opacity: 0.85, marginTop: 2 },
   sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
@@ -382,6 +389,7 @@ const styles = StyleSheet.create({
   upNextRow: {
     flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: colors.card,
     borderWidth: 1.5, borderColor: colors.border, borderRadius: radii.lg, padding: 12, marginBottom: 12,
+    ...shadow.chip,
   },
   upNextCover: { width: 46, height: 66, borderRadius: 7, backgroundColor: colors.chipBg, overflow: 'hidden' },
   upNextCoverImg: { width: '100%', height: '100%' },

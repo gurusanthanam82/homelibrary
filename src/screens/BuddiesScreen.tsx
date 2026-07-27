@@ -7,7 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, radii } from '../theme';
+import { colors, radii, shadow } from '../theme';
 import { useAppData } from '../contexts/AppDataContext';
 import type { BuddiesStackParamList, Buddy } from '../types';
 
@@ -128,14 +128,19 @@ export default function BuddiesScreen() {
         visible={inviteOpen}
         transparent
         animationType="slide"
-        onRequestClose={() => setInviteOpen(false)}
+        onRequestClose={resetInvite}
         onShow={() => setTimeout(() => inviteInputRef.current?.focus(), 250)}
       >
         <View style={styles.modalScrim}>
           <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
             <View style={styles.modalSheet}>
               <View style={styles.handle} />
-              <Text style={styles.sheetTitle}>Invite a buddy</Text>
+              <View style={styles.inviteHeaderRow}>
+                <Text style={styles.sheetTitle}>Invite a buddy</Text>
+                <TouchableOpacity style={styles.closeXBtn} onPress={() => { resetInvite(); }}>
+                  <Ionicons name="close" size={18} color={colors.text} />
+                </TouchableOpacity>
+              </View>
               <TextInput ref={inviteInputRef} style={styles.inviteInput} placeholder="Name" placeholderTextColor={colors.textFaint} value={inviteName} onChangeText={setInviteName} />
               <TextInput style={[styles.inviteInput, { marginTop: 10 }]} placeholder="Email (optional, for email invite)" placeholderTextColor={colors.textFaint} value={inviteEmail} onChangeText={setInviteEmail} autoCapitalize="none" keyboardType="email-address" />
 
@@ -220,10 +225,10 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   title: { fontSize: 30, fontWeight: '700', color: colors.text, letterSpacing: -0.5 },
   subtitle: { fontSize: 13, color: colors.textMuted, marginTop: 4, fontWeight: '500' },
-  searchBox: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.card, borderWidth: 1.5, borderColor: colors.border, borderRadius: radii.md, padding: 10, marginTop: 14 },
+  searchBox: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.card, borderWidth: 1.5, borderColor: colors.border, borderRadius: radii.md, padding: 10, marginTop: 14, ...shadow.chip },
   searchInput: { flex: 1, fontSize: 14, color: colors.text },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 14, marginTop: 18 },
-  card: { width: '47%', backgroundColor: colors.card, borderWidth: 1.5, borderColor: colors.border, borderRadius: radii.xl, padding: 18, alignItems: 'center' },
+  card: { width: '47%', backgroundColor: colors.card, borderWidth: 1.5, borderColor: colors.border, borderRadius: radii.xl, padding: 18, alignItems: 'center', ...shadow.card },
   avatar: { width: 60, height: 60, borderRadius: 30, alignItems: 'center', justifyContent: 'center', marginBottom: 10 },
   avatarSm: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   avatarText: { color: colors.white, fontWeight: '700', fontSize: 20 },
@@ -239,30 +244,32 @@ const styles = StyleSheet.create({
   inviteCard: { width: '47%', backgroundColor: colors.pinkBg, borderWidth: 1.5, borderColor: colors.coral, borderStyle: 'dashed', borderRadius: radii.xl, padding: 18, alignItems: 'center', justifyContent: 'center' },
   inviteCircle: { width: 60, height: 60, borderRadius: 30, borderWidth: 2, borderColor: colors.coral, alignItems: 'center', justifyContent: 'center', marginBottom: 10 },
   inviteText: { fontSize: 14, fontWeight: '700', color: colors.maroon },
-  browseBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: colors.pinkBg, borderWidth: 1.5, borderColor: colors.pinkBorder, borderRadius: radii.lg, padding: 13, marginTop: 12 },
+  browseBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: colors.pinkBg, borderWidth: 1.5, borderColor: colors.pinkBorder, borderRadius: radii.lg, padding: 13, marginTop: 12, ...shadow.chip },
   browseBtnText: { fontSize: 14, fontWeight: '700', color: colors.maroon },
   blockedLabel: { fontSize: 13, color: colors.textMuted, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 26, marginBottom: 10 },
-  blockedRow: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 12, backgroundColor: colors.card, borderWidth: 1.5, borderColor: colors.border, borderRadius: radii.lg, marginBottom: 10 },
+  blockedRow: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 12, backgroundColor: colors.card, borderWidth: 1.5, borderColor: colors.border, borderRadius: radii.lg, marginBottom: 10, ...shadow.chip },
   blockedName: { fontSize: 15, fontWeight: '700', color: colors.textMuted },
   blockedSub: { fontSize: 12, color: colors.textFaint, fontWeight: '600' },
   unblockBtn: { backgroundColor: colors.chipBg, paddingHorizontal: 14, paddingVertical: 8, borderRadius: radii.sm },
   unblockBtnText: { fontSize: 13, fontWeight: '700', color: colors.text },
   modalScrim: { flex: 1, backgroundColor: 'rgba(27,23,20,0.5)', justifyContent: 'flex-end' },
-  modalSheet: { backgroundColor: colors.bg, borderTopLeftRadius: radii.sheet, borderTopRightRadius: radii.sheet, padding: 20, paddingBottom: 30 },
+  modalSheet: { backgroundColor: colors.bg, borderTopLeftRadius: radii.sheet, borderTopRightRadius: radii.sheet, padding: 20, paddingBottom: 30, ...shadow.dark },
   handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: colors.border, alignSelf: 'center', marginBottom: 16 },
   sheetTitle: { fontSize: 20, fontWeight: '700', color: colors.text },
+  inviteHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  closeXBtn: { width: 30, height: 30, borderRadius: 15, backgroundColor: colors.chipBg, alignItems: 'center', justifyContent: 'center' },
   inviteInput: { marginTop: 16, borderWidth: 1.5, borderColor: colors.border, borderRadius: radii.md, padding: 13, fontSize: 15, color: colors.text, backgroundColor: colors.card },
   inviteViaLabel: { fontSize: 12, fontWeight: '700', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 18, marginBottom: 4 },
   saveInviteBtn: { marginTop: 16, backgroundColor: colors.chipBg, padding: 16, borderRadius: radii.lg, alignItems: 'center' },
   saveInviteBtnText: { color: colors.text, fontWeight: '700', fontSize: 15 },
   shareRow: { flexDirection: 'row', gap: 12, marginTop: 18 },
-  shareTile: { flex: 1, borderRadius: radii.xl, padding: 16, alignItems: 'center', gap: 6 },
+  shareTile: { flex: 1, borderRadius: radii.xl, padding: 16, alignItems: 'center', gap: 6, ...shadow.chip },
   shareTileText: { fontSize: 13, fontWeight: '700', color: colors.white },
   shareBuddyRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 10 },
   shelfBookRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   shelfBookCover: { width: 44, height: 64, borderRadius: 9 },
   shelfBookTitle: { fontSize: 15, fontWeight: '700', color: colors.text, lineHeight: 19 },
   shelfBookAuthor: { fontSize: 12, color: colors.textMuted, fontWeight: '600', marginTop: 3 },
-  sendBtn: { backgroundColor: colors.card, borderWidth: 1.5, borderColor: colors.pinkBorder, paddingHorizontal: 14, paddingVertical: 7, borderRadius: radii.md },
+  sendBtn: { backgroundColor: colors.card, borderWidth: 1.5, borderColor: colors.pinkBorder, paddingHorizontal: 14, paddingVertical: 7, borderRadius: radii.md, ...shadow.chip },
   sendBtnText: { fontSize: 13, fontWeight: '700', color: colors.maroon },
 });

@@ -6,7 +6,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, radii, buddyColors } from '../theme';
+import { colors, radii, buddyColors, shadow } from '../theme';
 import { useAuth } from '../contexts/AuthContext';
 import { useAppData } from '../contexts/AppDataContext';
 import { getBooks } from '../services/books';
@@ -252,14 +252,14 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   title: { fontSize: 30, fontWeight: '700', color: colors.text, letterSpacing: -0.5 },
-  newBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: colors.maroon, paddingHorizontal: 14, paddingVertical: 9, borderRadius: radii.md },
+  newBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: colors.maroon, paddingHorizontal: 14, paddingVertical: 9, borderRadius: radii.md, ...shadow.chip },
   newBtnText: { color: colors.white, fontWeight: '700', fontSize: 13 },
-  searchBox: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.card, borderWidth: 1.5, borderColor: colors.border, borderRadius: radii.md, padding: 10, marginTop: 14 },
+  searchBox: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.card, borderWidth: 1.5, borderColor: colors.border, borderRadius: radii.md, padding: 10, marginTop: 14, ...shadow.chip },
   searchInput: { flex: 1, fontSize: 14, color: colors.text },
   empty: { alignItems: 'center', paddingTop: 60, gap: 6 },
   emptyText: { fontSize: 16, fontWeight: '700', color: colors.textMuted },
   emptySub: { fontSize: 12, color: colors.textFaint, fontWeight: '600' },
-  noteCard: { marginTop: 14, borderRadius: radii.xl, padding: 18 },
+  noteCard: { marginTop: 14, borderRadius: radii.xl, padding: 18, ...shadow.card },
   noteText: { fontSize: 15, lineHeight: 21, fontWeight: '500', color: colors.white },
   noteMeta: { fontSize: 12, fontWeight: '700', color: 'rgba(255,255,255,0.85)', marginTop: 14 },
   sharedRow: { flexDirection: 'row', alignItems: 'center', marginTop: 10 },

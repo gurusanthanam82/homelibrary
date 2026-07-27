@@ -8,7 +8,7 @@ import { useNavigation, useFocusEffect, useRoute } from '@react-navigation/nativ
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, radii, genreColor, statusColors, statusLabels } from '../theme';
+import { colors, radii, genreColor, statusColors, statusLabels, shadow } from '../theme';
 import { useAuth } from '../contexts/AuthContext';
 import { getBooks, addBook } from '../services/books';
 import { SAMPLE_BOOKS } from '../sampleData';
@@ -233,19 +233,21 @@ const styles = StyleSheet.create({
   title: { fontSize: 30, fontWeight: '700', color: colors.text, letterSpacing: -0.5 },
   headerBtns: { flexDirection: 'row', gap: 8 },
   secondaryBtns: { flexDirection: 'row', gap: 8, paddingHorizontal: 20, marginTop: 10 },
-  primaryChip: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.maroon, paddingHorizontal: 13, paddingVertical: 9, borderRadius: radii.md },
+  primaryChip: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.maroon, paddingHorizontal: 13, paddingVertical: 9, borderRadius: radii.md, ...shadow.chip },
   primaryChipText: { color: colors.white, fontSize: 13, fontWeight: '700' },
-  secondaryChip: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.pinkBg, borderWidth: 1, borderColor: colors.pinkBorder, paddingHorizontal: 13, paddingVertical: 9, borderRadius: radii.md },
+  secondaryChip: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.pinkBg, borderWidth: 1, borderColor: colors.pinkBorder, paddingHorizontal: 13, paddingVertical: 9, borderRadius: radii.md, ...shadow.chip },
   secondaryChipText: { color: colors.maroon, fontSize: 13, fontWeight: '700' },
   searchBox: {
     flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.card,
     borderWidth: 1.5, borderColor: colors.border, borderRadius: radii.md, padding: 10,
     marginHorizontal: 20, marginTop: 14,
+    ...shadow.chip,
   },
   searchInput: { flex: 1, fontSize: 14, color: colors.text },
   shelfChip: {
     flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: colors.pinkBg,
     paddingHorizontal: 13, paddingVertical: 8, borderRadius: radii.md,
+    ...shadow.chip,
   },
   shelfChipActive: { backgroundColor: colors.maroon },
   shelfChipText: { fontSize: 13, fontWeight: '700', color: colors.maroon },
@@ -258,9 +260,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.pinkBg,
     borderWidth: 1, borderColor: colors.pinkBorder, borderRadius: radii.md,
     marginHorizontal: 20, marginTop: 12, padding: 10,
+    ...shadow.chip,
   },
   shelfBannerText: { flex: 1, fontSize: 13, fontWeight: '700', color: colors.maroon },
-  filterChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: radii.pill, backgroundColor: colors.chipBg },
+  filterChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: radii.pill, backgroundColor: colors.chipBg, ...shadow.chip },
   filterChipActive: { backgroundColor: colors.maroon },
   filterChipText: { fontSize: 13, fontWeight: '700', color: colors.text },
   filterChipTextActive: { color: colors.white },
@@ -268,6 +271,7 @@ const styles = StyleSheet.create({
   cover: {
     width: 54, height: 80, borderRadius: 8, backgroundColor: colors.maroon, padding: 7,
     justifyContent: 'flex-end', overflow: 'hidden',
+    ...shadow.chip,
   },
   coverImg: { width: '100%', height: '100%', position: 'absolute' },
   coverFallback: { fontSize: 9, fontWeight: '700', color: colors.white },
@@ -278,6 +282,6 @@ const styles = StyleSheet.create({
   genrePillText: { fontSize: 11, fontWeight: '700', color: colors.white },
   statusPill: { paddingHorizontal: 9, paddingVertical: 2, borderRadius: 12, borderWidth: 1.5 },
   statusPillText: { fontSize: 11, fontWeight: '700' },
-  sampleBtn: { flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: colors.maroon, paddingHorizontal: 18, paddingVertical: 12, borderRadius: radii.lg, marginTop: 16 },
+  sampleBtn: { flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: colors.maroon, paddingHorizontal: 18, paddingVertical: 12, borderRadius: radii.lg, marginTop: 16, ...shadow.chip },
   sampleBtnText: { color: colors.white, fontWeight: '700', fontSize: 13 },
 });

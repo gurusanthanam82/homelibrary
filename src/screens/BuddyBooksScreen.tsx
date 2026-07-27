@@ -3,7 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet } from 
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, radii } from '../theme';
+import { colors, radii, shadow } from '../theme';
 import { useAppData } from '../contexts/AppDataContext';
 
 export default function BuddyBooksScreen() {
@@ -74,10 +74,10 @@ export default function BuddyBooksScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   header: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  backBtn: { width: 38, height: 38, borderRadius: radii.md, backgroundColor: colors.card, borderWidth: 1.5, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },
+  backBtn: { width: 38, height: 38, borderRadius: radii.md, backgroundColor: colors.card, borderWidth: 1.5, borderColor: colors.border, alignItems: 'center', justifyContent: 'center', ...shadow.chip },
   title: { fontSize: 22, fontWeight: '700', color: colors.text, letterSpacing: -0.3 },
   subtitle: { fontSize: 12, color: colors.textMuted, fontWeight: '600', marginTop: 1 },
-  searchBox: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.chipBg, borderRadius: radii.md, padding: 10, marginTop: 14 },
+  searchBox: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.chipBg, borderRadius: radii.md, padding: 10, marginTop: 14, ...shadow.chip },
   searchInput: { flex: 1, fontSize: 14, color: colors.text },
   empty: { alignItems: 'center', paddingTop: 60, gap: 6 },
   emptyText: { fontSize: 16, fontWeight: '700', color: colors.textMuted },

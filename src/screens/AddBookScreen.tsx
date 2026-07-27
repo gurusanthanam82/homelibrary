@@ -8,7 +8,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, radii, GENRES as BASE_GENRES, statusLabels, shelves as BASE_SHELVES } from '../theme';
+import { colors, radii, shadow, GENRES as BASE_GENRES, statusLabels, shelves as BASE_SHELVES } from '../theme';
 import { useAuth } from '../contexts/AuthContext';
 import { useAppData } from '../contexts/AppDataContext';
 import { addBook, searchBooksByISBN } from '../services/books';
@@ -35,8 +35,8 @@ export default function AddBookScreen() {
   const [genre, setGenre] = useState(route.params?.prefill?.genre ?? GENRES[0]);
   const [status, setStatus] = useState<Book['status']>('unread');
   const [shelf, setShelf] = useState('');
-  const [language, setLanguage] = useState('');
-  const [publisher, setPublisher] = useState('');
+  const [language, setLanguage] = useState(route.params?.prefill?.language ?? '');
+  const [publisher, setPublisher] = useState(route.params?.prefill?.publisher ?? '');
   const [loading, setLoading] = useState(false);
   const [lookingUp, setLookingUp] = useState(false);
   const [customGenreOpen, setCustomGenreOpen] = useState(false);
@@ -68,6 +68,8 @@ export default function AddBookScreen() {
       if (data) {
         if (data.title) setTitle(data.title);
         if (data.author) setAuthor(data.author);
+        if (data.language) setLanguage(data.language);
+        if (data.publisher) setPublisher(data.publisher);
       } else {
         Alert.alert('Not found', 'No book found for that ISBN.');
       }
@@ -221,9 +223,9 @@ export default function AddBookScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   header: { paddingHorizontal: 20, paddingBottom: 14, flexDirection: 'row', alignItems: 'center', gap: 10, borderBottomWidth: 1, borderBottomColor: colors.border },
-  headerBtn: { width: 38, height: 38, borderRadius: radii.md, backgroundColor: colors.card, borderWidth: 1.5, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },
+  headerBtn: { width: 38, height: 38, borderRadius: radii.md, backgroundColor: colors.card, borderWidth: 1.5, borderColor: colors.border, alignItems: 'center', justifyContent: 'center', ...shadow.chip },
   headerTitle: { flex: 1, fontSize: 18, fontWeight: '700', color: colors.text },
-  saveBtn: { backgroundColor: colors.maroon, paddingHorizontal: 16, paddingVertical: 9, borderRadius: radii.md },
+  saveBtn: { backgroundColor: colors.maroon, paddingHorizontal: 16, paddingVertical: 9, borderRadius: radii.md, ...shadow.chip },
   saveBtnText: { color: colors.white, fontWeight: '700', fontSize: 13 },
   scroll: { flex: 1 },
   label: { fontSize: 11, fontWeight: '700', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 },

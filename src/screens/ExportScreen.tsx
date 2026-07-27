@@ -5,7 +5,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, radii } from '../theme';
+import { colors, radii, shadow } from '../theme';
 import { useAuth } from '../contexts/AuthContext';
 import { useAppData } from '../contexts/AppDataContext';
 import { getBooks } from '../services/books';
@@ -183,15 +183,15 @@ export default function ExportScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   header: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  backBtn: { width: 38, height: 38, borderRadius: radii.md, backgroundColor: colors.card, borderWidth: 1.5, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },
+  backBtn: { width: 38, height: 38, borderRadius: radii.md, backgroundColor: colors.card, borderWidth: 1.5, borderColor: colors.border, alignItems: 'center', justifyContent: 'center', ...shadow.chip },
   title: { fontSize: 26, fontWeight: '700', color: colors.text, letterSpacing: -0.3 },
   subtitle: { fontSize: 13, color: colors.textMuted, fontWeight: '500', marginTop: 6 },
-  card: { marginTop: 18, backgroundColor: colors.card, borderWidth: 1.5, borderColor: colors.border, borderRadius: radii.xl, padding: 18 },
+  card: { marginTop: 18, backgroundColor: colors.card, borderWidth: 1.5, borderColor: colors.border, borderRadius: radii.xl, padding: 18, ...shadow.card },
   cardLabel: { fontSize: 11, fontWeight: '800', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 12 },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   colChip: { backgroundColor: colors.pinkBg, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 11 },
   colChipText: { fontSize: 13, fontWeight: '700', color: colors.maroonDark },
-  exportBtn: { marginTop: 16, flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: colors.teal, borderRadius: radii.xl, padding: 16 },
+  exportBtn: { marginTop: 16, flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: colors.teal, borderRadius: radii.xl, padding: 16, ...shadow.chip },
   exportBtnTitle: { fontSize: 15, fontWeight: '700', color: colors.white },
   exportBtnSub: { fontSize: 12, color: colors.white, opacity: 0.85 },
   backupCard: { marginTop: 20, backgroundColor: colors.card, borderWidth: 1.5, borderColor: colors.border, borderRadius: radii.xl, padding: 16 },

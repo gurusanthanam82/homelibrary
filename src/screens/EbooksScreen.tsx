@@ -6,7 +6,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, radii, buddyColors } from '../theme';
+import { colors, radii, buddyColors, shadow } from '../theme';
 import { useAppData } from '../contexts/AppDataContext';
 import type { LibraryStackParamList } from '../types';
 
@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 22, fontWeight: '700', color: colors.text, letterSpacing: -0.3 },
   subtitle: { fontSize: 12, color: colors.textMuted, fontWeight: '600', marginTop: 1 },
   btnRow: { flexDirection: 'row', gap: 8, marginTop: 14 },
-  uploadBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: colors.maroon, padding: 12, borderRadius: radii.md },
+  uploadBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: colors.maroon, padding: 12, borderRadius: radii.md, ...shadow.chip },
   uploadBtnText: { fontSize: 13, fontWeight: '700', color: colors.white },
   empty: { alignItems: 'center', paddingTop: 60, gap: 6 },
   emptyIcon: { width: 72, height: 72, borderRadius: radii.xl, backgroundColor: colors.pinkBg, borderWidth: 1.5, borderColor: colors.pinkBorder, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },

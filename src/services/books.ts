@@ -48,12 +48,26 @@ export async function deleteAllBooks(userId: string) {
   if (error) throw error;
 }
 
+const LANGUAGE_NAMES: Record<string, string> = {
+  eng: 'English', spa: 'Spanish', fre: 'French', fra: 'French', ger: 'German', deu: 'German',
+  ita: 'Italian', por: 'Portuguese', rus: 'Russian', chi: 'Chinese', zho: 'Chinese', jpn: 'Japanese',
+  kor: 'Korean', ara: 'Arabic', hin: 'Hindi', tam: 'Tamil', tel: 'Telugu', ben: 'Bengali',
+  mar: 'Marathi', guj: 'Gujarati', kan: 'Kannada', mal: 'Malayalam', pan: 'Punjabi', urd: 'Urdu',
+};
+
+function languageName(code: string) {
+  return LANGUAGE_NAMES[code] ?? code.charAt(0).toUpperCase() + code.slice(1);
+}
+
 export async function searchBooksByISBN(isbn: string): Promise<Partial<Book> | null> {
   const res = await fetch(`https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&format=json&jscmd=details`);
   const json = await res.json();
   const entry = json[`ISBN:${isbn}`];
   if (!entry) return null;
   const details = entry.details;
+  const languages = (details.languages ?? [])
+    .map((l: { key: string }) => languageName(l.key.split('/').pop() ?? ''))
+    .filter(Boolean);
   return {
     title: details.title,
     author: details.authors?.[0]?.name,
@@ -61,5 +75,7 @@ export async function searchBooksByISBN(isbn: string): Promise<Partial<Book> | n
     cover_url: details.cover?.large ?? details.cover?.medium,
     published_year: details.publish_date ? parseInt(details.publish_date) : undefined,
     description: details.description?.value ?? details.description,
+    language: languages.length ? languages.join(', ') : undefined,
+    publisher: details.publishers?.length ? details.publishers.join(', ') : undefined,
   };
 }

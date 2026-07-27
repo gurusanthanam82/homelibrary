@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
-import { colors, radii } from '../theme';
+import { colors, radii, shadow } from '../theme';
 import { useAuth } from '../contexts/AuthContext';
 import { useAppData } from '../contexts/AppDataContext';
 import { deleteAllBooks } from '../services/books';
@@ -12,10 +12,11 @@ import { deleteAllBooks } from '../services/books';
 export default function ProfileScreen() {
   const navigation = useNavigation();
   const { session, signOut } = useAuth();
-  const { data, updateProfile, toggleShelfSharing, resetAllData } = useAppData();
+  const { data, updateProfile, toggleShelfSharing, setAllShelfSharing, resetAllData } = useAppData();
   const [resetting, setResetting] = useState(false);
   const insets = useSafeAreaInsets();
-  const [shareAll, setShareAll] = useState(false);
+  const activeBuddies = data.buddies.filter((b) => !b.blocked);
+  const shareAll = activeBuddies.length > 0 && activeBuddies.every((b) => b.hasSharedShelf);
   const accountName = (session?.user.user_metadata as any)?.full_name || session?.user.email?.split('@')[0] || '';
   const [name, setName] = useState(data.profile.name || accountName);
   const email = session?.user.email || '';
@@ -148,7 +149,7 @@ export default function ProfileScreen() {
         <View style={styles.sharingRow}>
           <View style={styles.sharingAvatar}><Ionicons name="people-outline" size={16} color={colors.white} /></View>
           <Text style={styles.sharingName}>All buddies</Text>
-          <TouchableOpacity style={[styles.toggle, shareAll && styles.toggleOn]} onPress={() => setShareAll((v) => !v)}>
+          <TouchableOpacity style={[styles.toggle, shareAll && styles.toggleOn]} onPress={() => setAllShelfSharing(!shareAll)}>
             <View style={[styles.toggleDot, shareAll && styles.toggleDotOn]} />
           </TouchableOpacity>
         </View>
@@ -194,7 +195,7 @@ const styles = StyleSheet.create({
   headerRow: { flexDirection: 'row' },
   backBtn: { width: 38, height: 38, borderRadius: radii.md, backgroundColor: colors.card, borderWidth: 1.5, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },
   avatarCol: { alignItems: 'center', marginTop: 8, gap: 4 },
-  avatar: { width: 84, height: 84, borderRadius: 42, backgroundColor: colors.maroon, alignItems: 'center', justifyContent: 'center', marginBottom: 6, overflow: 'visible' },
+  avatar: { width: 84, height: 84, borderRadius: 42, backgroundColor: colors.maroon, alignItems: 'center', justifyContent: 'center', marginBottom: 6, overflow: 'visible', ...shadow.card },
   avatarImg: { width: 84, height: 84, borderRadius: 42 },
   avatarText: { color: colors.white, fontWeight: '700', fontSize: 34 },
   avatarEditBadge: {
@@ -221,7 +222,7 @@ const styles = StyleSheet.create({
   toggleOn: { backgroundColor: colors.maroon },
   toggleDot: { width: 18, height: 18, borderRadius: 9, backgroundColor: colors.white, alignSelf: 'flex-start' },
   toggleDotOn: { alignSelf: 'flex-end' },
-  saveBtn: { marginTop: 22, backgroundColor: colors.maroon, padding: 15, borderRadius: radii.lg, alignItems: 'center' },
+  saveBtn: { marginTop: 22, backgroundColor: colors.maroon, padding: 15, borderRadius: radii.lg, alignItems: 'center', ...shadow.chip },
   saveBtnText: { color: colors.white, fontWeight: '700', fontSize: 15 },
   signOutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 16, padding: 12 },
   signOutText: { color: colors.maroon, fontWeight: '700', fontSize: 14 },

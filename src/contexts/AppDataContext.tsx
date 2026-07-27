@@ -17,6 +17,7 @@ type AppData = {
   customGenres: string[];
   customShelves: string[];
   chapters: Record<string, Chapter[]>;
+  chapterPhotos: Record<string, string[]>;
   driveFolderUrl: string;
   driveFreq: 'Daily' | 'Weekly' | 'Monthly';
   driveLastBackup: string;
@@ -35,6 +36,7 @@ const defaultData: AppData = {
   customGenres: [],
   customShelves: [],
   chapters: {},
+  chapterPhotos: {},
   driveFolderUrl: '',
   driveFreq: 'Weekly',
   driveLastBackup: 'Never',
@@ -53,6 +55,7 @@ const blankData: AppData = {
   customGenres: [],
   customShelves: [],
   chapters: {},
+  chapterPhotos: {},
   driveFolderUrl: '',
   driveFreq: 'Weekly',
   driveLastBackup: 'Never',
@@ -96,6 +99,8 @@ type AppDataContextType = {
   getChapters: (bookId: string) => Chapter[] | undefined;
   addChapter: (bookId: string, chapter: { title: string; page: number }) => void;
   removeChapterAt: (bookId: string, index: number) => void;
+  addChapterPhoto: (bookId: string, uri: string) => void;
+  removeChapterPhoto: (bookId: string, index: number) => void;
   deleteChapters: (bookId: string) => void;
   toggleChapter: (bookId: string, index: number) => void;
   markAllChapters: (bookId: string, read: boolean) => void;
@@ -258,6 +263,17 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     persist({ ...data, chapters: { ...data.chapters, [bookId]: list.filter((_, i) => i !== index) } });
   };
 
+  const addChapterPhoto = (bookId: string, uri: string) => {
+    const list = data.chapterPhotos[bookId] ?? [];
+    persist({ ...data, chapterPhotos: { ...data.chapterPhotos, [bookId]: [...list, uri] } });
+  };
+
+  const removeChapterPhoto = (bookId: string, index: number) => {
+    const list = data.chapterPhotos[bookId];
+    if (!list) return;
+    persist({ ...data, chapterPhotos: { ...data.chapterPhotos, [bookId]: list.filter((_, i) => i !== index) } });
+  };
+
   const deleteChapters = (bookId: string) => {
     const next = { ...data.chapters };
     delete next[bookId];
@@ -311,6 +327,8 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
         getChapters,
         addChapter,
         removeChapterAt,
+        addChapterPhoto,
+        removeChapterPhoto,
         deleteChapters,
         toggleChapter,
         markAllChapters,

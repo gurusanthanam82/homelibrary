@@ -48,6 +48,7 @@ export default function BookDetailScreen() {
     data, addCustomGenre, addCustomShelf, addEbook, removeEbook,
     monitor, startMonitor, pauseMonitor, resumeMonitor, stopMonitor,
     getChapters, addChapter, removeChapterAt, deleteChapters, toggleChapter, markAllChapters,
+    addChapterPhoto, removeChapterPhoto,
   } = useAppData();
   const [book, setBook] = useState<Book | null>(null);
   const [loading, setLoading] = useState(true);
@@ -55,6 +56,7 @@ export default function BookDetailScreen() {
   const [fieldDraft, setFieldDraft] = useState('');
   const [shelfSheetOpen, setShelfSheetOpen] = useState(false);
   const [customShelfDraft, setCustomShelfDraft] = useState('');
+  const [viewingPhoto, setViewingPhoto] = useState<string | null>(null);
   const [chaptersOpen, setChaptersOpen] = useState(false);
   const [newChapterTitle, setNewChapterTitle] = useState('');
   const [newChapterPage, setNewChapterPage] = useState('');
@@ -188,6 +190,44 @@ export default function BookDetailScreen() {
     ]);
   }
 
+  async function photoFromCamera() {
+    if (!book) return;
+    const perm = await ImagePicker.requestCameraPermissionsAsync();
+    if (!perm.granted) {
+      Alert.alert('Camera access needed', 'Enable camera access to photograph the index page.');
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({ quality: 0.7 });
+    if (!result.canceled && result.assets[0]) addChapterPhoto(book.id, result.assets[0].uri);
+  }
+
+  async function photoFromLibrary() {
+    if (!book) return;
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      Alert.alert('Photo access needed', 'Enable photo library access to add an index page photo.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({ quality: 0.7 });
+    if (!result.canceled && result.assets[0]) addChapterPhoto(book.id, result.assets[0].uri);
+  }
+
+  function addChapterPhotoPrompt() {
+    Alert.alert('Add a photo', 'Photograph the index or a chapter page', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Take Photo', onPress: photoFromCamera },
+      { text: 'Choose from Library', onPress: photoFromLibrary },
+    ]);
+  }
+
+  function confirmDeleteChapterPhoto(index: number) {
+    if (!book) return;
+    Alert.alert('Remove photo', 'Remove this photo?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Remove', style: 'destructive', onPress: () => removeChapterPhoto(book.id, index) },
+    ]);
+  }
+
   function handleDelete() {
     Alert.alert('Remove book', 'Are you sure you want to remove this from your library?', [
       { text: 'Cancel', style: 'cancel' },
@@ -203,6 +243,7 @@ export default function BookDetailScreen() {
   const publishers = splitList(book.publisher);
   const bookEbooks = data.ebooks.filter((e) => e.bookId === book.id);
   const chapters = getChapters(book.id);
+  const chapterPhotos = data.chapterPhotos[book.id] ?? [];
   const chReadCount = chapters?.filter((c) => c.read).length ?? 0;
   const chPct = chapters?.length ? Math.round((chReadCount / chapters.length) * 100) : 0;
   const sessionLiveSeconds = isMonitoring ? monitor.accumSeconds + (monitor.paused || !monitor.startedAt ? 0 : Math.floor((Date.now() - monitor.startedAt) / 1000)) : 0;
@@ -522,6 +563,23 @@ export default function BookDetailScreen() {
             </View>
           )}
 
+          <View style={styles.photosSection}>
+            <Text style={styles.photosLabel}>Index / chapter page photos</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
+              {chapterPhotos.map((uri, i) => (
+                <TouchableOpacity key={i} style={styles.photoThumbWrap} onPress={() => setViewingPhoto(uri)} onLongPress={() => confirmDeleteChapterPhoto(i)}>
+                  <Image source={{ uri }} style={styles.photoThumb} />
+                  <TouchableOpacity style={styles.photoRemoveBtn} onPress={() => confirmDeleteChapterPhoto(i)}>
+                    <Ionicons name="close" size={11} color={colors.white} />
+                  </TouchableOpacity>
+                </TouchableOpacity>
+              ))}
+              <TouchableOpacity style={styles.photoAddTile} onPress={addChapterPhotoPrompt}>
+                <Ionicons name="camera-outline" size={22} color={colors.maroon} />
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+
           <View style={styles.addChapterRow}>
             <TextInput
               style={[styles.input, { flex: 1 }]}
@@ -577,6 +635,15 @@ export default function BookDetailScreen() {
             </>
           )}
         </View>
+      </Modal>
+
+      <Modal visible={!!viewingPhoto} transparent animationType="fade" onRequestClose={() => setViewingPhoto(null)}>
+        <TouchableOpacity style={styles.photoViewerScrim} activeOpacity={1} onPress={() => setViewingPhoto(null)}>
+          {viewingPhoto ? <Image source={{ uri: viewingPhoto }} style={styles.photoViewerImg} resizeMode="contain" /> : null}
+          <TouchableOpacity style={styles.photoViewerClose} onPress={() => setViewingPhoto(null)}>
+            <Ionicons name="close" size={22} color={colors.white} />
+          </TouchableOpacity>
+        </TouchableOpacity>
       </Modal>
     </ScrollView>
   );
@@ -686,6 +753,24 @@ const styles = StyleSheet.create({
   scanTitle: { fontSize: 20, fontWeight: '700', color: colors.text, textAlign: 'center' },
   scanSub: { fontSize: 13, color: colors.textMuted, fontWeight: '600', marginTop: 8, textAlign: 'center', maxWidth: 230 },
   addChapterRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 18, paddingBottom: 16 },
+  photosSection: { paddingHorizontal: 18, paddingBottom: 16 },
+  photosLabel: { fontSize: 11, fontWeight: '700', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 },
+  photoThumbWrap: { width: 64, height: 64, borderRadius: radii.md, overflow: 'visible' },
+  photoThumb: { width: 64, height: 64, borderRadius: radii.md, backgroundColor: colors.chipBg },
+  photoRemoveBtn: {
+    position: 'absolute', top: -6, right: -6, width: 20, height: 20, borderRadius: 10,
+    backgroundColor: colors.maroon, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: colors.bg,
+  },
+  photoAddTile: {
+    width: 64, height: 64, borderRadius: radii.md, backgroundColor: colors.pinkBg,
+    borderWidth: 1.5, borderColor: colors.pinkBorder, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center',
+  },
+  photoViewerScrim: { flex: 1, backgroundColor: 'rgba(0,0,0,0.9)', alignItems: 'center', justifyContent: 'center' },
+  photoViewerImg: { width: '100%', height: '80%' },
+  photoViewerClose: {
+    position: 'absolute', top: 50, right: 20, width: 40, height: 40, borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center',
+  },
   chProgressRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
   chProgressText: { fontSize: 13, fontWeight: '700', color: colors.text },
   chProgressPct: { fontSize: 13, fontWeight: '700', color: colors.maroon },

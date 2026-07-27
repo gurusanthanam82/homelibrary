@@ -12,6 +12,8 @@ import type { LibraryStackParamList } from '../types';
 
 type Nav = NativeStackNavigationProp<LibraryStackParamList>;
 
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
+
 function fmtSize(bytes?: number) {
   if (!bytes) return '';
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
@@ -20,10 +22,9 @@ function fmtSize(bytes?: number) {
 
 export default function EbooksScreen() {
   const navigation = useNavigation<Nav>();
-  const { data, addEbook } = useAppData();
+  const { data, addEbook, removeEbook } = useAppData();
   const insets = useSafeAreaInsets();
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [manualOpen, setManualOpen] = useState(false);
   const [pending, setPending] = useState<{ name: string; size: string; uri: string; format: 'PDF' | 'EPUB' | 'MOBI' } | null>(null);
   const [bookTitle, setBookTitle] = useState('');
 
@@ -31,11 +32,22 @@ export default function EbooksScreen() {
     const result = await DocumentPicker.getDocumentAsync({ type: ['application/pdf', 'application/epub+zip', '*/*'] });
     if (result.canceled || !result.assets?.[0]) return;
     const asset = result.assets[0];
+    if (asset.size && asset.size > MAX_UPLOAD_BYTES) {
+      Alert.alert('File too large', `"${asset.name}" is ${fmtSize(asset.size)}. Please choose a file under 5 MB.`);
+      return;
+    }
     const ext = (asset.name.split('.').pop() ?? 'pdf').toUpperCase();
     const format: 'PDF' | 'EPUB' | 'MOBI' = ext === 'EPUB' ? 'EPUB' : ext === 'MOBI' ? 'MOBI' : 'PDF';
     setPending({ name: asset.name, size: fmtSize(asset.size), uri: asset.uri, format });
     setBookTitle(asset.name.replace(/\.[^.]+$/, ''));
     setConfirmOpen(true);
+  }
+
+  function confirmDelete(id: string, name: string) {
+    Alert.alert('Remove e-book', `Remove "${name}" from your library?`, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Remove', style: 'destructive', onPress: () => removeEbook(id) },
+    ]);
   }
 
   async function saveEbook() {
@@ -72,15 +84,12 @@ export default function EbooksScreen() {
         </View>
 
         <View style={styles.btnRow}>
-          <TouchableOpacity style={styles.manualBtn} onPress={() => setManualOpen(true)}>
-            <Ionicons name="add" size={14} color={colors.text} />
-            <Text style={styles.manualBtnText}>Add manually</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.uploadBtn} onPress={handleUpload}>
+          <TouchableOpacity style={[styles.uploadBtn, { flex: 1 }]} onPress={handleUpload}>
             <Ionicons name="cloud-upload-outline" size={14} color={colors.white} />
             <Text style={styles.uploadBtnText}>Upload & add</Text>
           </TouchableOpacity>
         </View>
+        <Text style={styles.sizeLimitText}>Max file size: 5 MB</Text>
 
         {data.ebooks.length === 0 ? (
           <View style={styles.empty}>
@@ -97,6 +106,9 @@ export default function EbooksScreen() {
                 <Text style={styles.fileMeta}>{ef.bookTitle} · {ef.size}</Text>
               </View>
               <View style={styles.readBtn}><Text style={styles.readBtnText}>Read</Text></View>
+              <TouchableOpacity style={styles.deleteBtn} onPress={() => confirmDelete(ef.id, ef.name)}>
+                <Ionicons name="trash-outline" size={16} color={colors.maroon} />
+              </TouchableOpacity>
             </TouchableOpacity>
           ))
         )}
@@ -120,30 +132,6 @@ export default function EbooksScreen() {
           </KeyboardAvoidingView>
         </View>
       </Modal>
-
-      <Modal visible={manualOpen} transparent animationType="slide" onRequestClose={() => setManualOpen(false)}>
-        <View style={styles.modalScrim}>
-          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-            <View style={styles.modalSheet}>
-              <View style={styles.handle} />
-              <Text style={styles.sheetTitle}>Add e-book manually</Text>
-              <Text style={styles.fieldLabel}>Book title</Text>
-              <TextInput style={styles.input} value={bookTitle} onChangeText={setBookTitle} placeholder="Book title" placeholderTextColor={colors.textFaint} />
-              <TouchableOpacity
-                style={styles.bigBtn}
-                onPress={() => {
-                  if (!bookTitle.trim()) { Alert.alert('Title required'); return; }
-                  addEbook({ name: `${bookTitle}.pdf`, bookTitle, format: 'PDF', size: '—', color: buddyColors[data.ebooks.length % buddyColors.length], content: '' });
-                  setBookTitle('');
-                  setManualOpen(false);
-                }}
-            >
-                <Text style={styles.bigBtnText}>Add</Text>
-              </TouchableOpacity>
-            </View>
-          </KeyboardAvoidingView>
-        </View>
-      </Modal>
     </View>
   );
 }
@@ -155,8 +143,6 @@ const styles = StyleSheet.create({
   title: { fontSize: 22, fontWeight: '700', color: colors.text, letterSpacing: -0.3 },
   subtitle: { fontSize: 12, color: colors.textMuted, fontWeight: '600', marginTop: 1 },
   btnRow: { flexDirection: 'row', gap: 8, marginTop: 14 },
-  manualBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: colors.chipBg, padding: 12, borderRadius: radii.md },
-  manualBtnText: { fontSize: 13, fontWeight: '700', color: colors.text },
   uploadBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: colors.maroon, padding: 12, borderRadius: radii.md },
   uploadBtnText: { fontSize: 13, fontWeight: '700', color: colors.white },
   empty: { alignItems: 'center', paddingTop: 60, gap: 6 },
@@ -170,6 +156,8 @@ const styles = StyleSheet.create({
   fileMeta: { fontSize: 12, color: colors.textMuted, fontWeight: '600', marginTop: 2 },
   readBtn: { backgroundColor: colors.pinkBg, borderWidth: 1, borderColor: colors.pinkBorder, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 9 },
   readBtnText: { fontSize: 11, fontWeight: '700', color: colors.maroon },
+  deleteBtn: { width: 30, height: 30, borderRadius: 15, backgroundColor: '#fff0ee', alignItems: 'center', justifyContent: 'center' },
+  sizeLimitText: { fontSize: 11, color: colors.textFaint, fontWeight: '600', marginTop: 8, textAlign: 'center' },
   modalScrim: { flex: 1, backgroundColor: 'rgba(27,23,20,0.5)', justifyContent: 'flex-end' },
   modalSheet: { backgroundColor: colors.bg, borderTopLeftRadius: radii.sheet, borderTopRightRadius: radii.sheet, padding: 20, paddingBottom: 30 },
   handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: colors.border, alignSelf: 'center', marginBottom: 16 },
@@ -179,6 +167,4 @@ const styles = StyleSheet.create({
   saveBtnText: { color: colors.white, fontWeight: '700', fontSize: 13 },
   fieldLabel: { fontSize: 11, fontWeight: '700', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6, marginTop: 4 },
   input: { borderWidth: 1.5, borderColor: colors.border, borderRadius: radii.md, padding: 13, fontSize: 15, color: colors.text, backgroundColor: colors.card },
-  bigBtn: { marginTop: 16, backgroundColor: colors.maroon, padding: 16, borderRadius: radii.md, alignItems: 'center' },
-  bigBtnText: { color: colors.white, fontWeight: '700', fontSize: 15 },
 });

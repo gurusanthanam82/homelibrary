@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
-  StyleSheet, Image, ActivityIndicator,
+  StyleSheet, Image, ActivityIndicator, Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -17,7 +17,7 @@ import type { Book, HomeStackParamList } from '../types';
 type Nav = NativeStackNavigationProp<HomeStackParamList>;
 
 export default function HomeScreen() {
-  const { session } = useAuth();
+  const { session, signOut } = useAuth();
   const { data } = useAppData();
   const navigation = useNavigation<Nav>();
   const insets = useSafeAreaInsets();
@@ -75,6 +75,13 @@ export default function HomeScreen() {
     (navigation as any).getParent()?.navigate(tab);
   }
 
+  function handleSignOut() {
+    Alert.alert('Sign Out', 'Are you sure?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Sign Out', style: 'destructive', onPress: signOut },
+    ]);
+  }
+
   if (loading) return <ActivityIndicator style={{ flex: 1, backgroundColor: colors.bg }} size="large" color={colors.maroon} />;
 
   return (
@@ -92,6 +99,9 @@ export default function HomeScreen() {
               <Ionicons name="chevron-forward" size={12} color={colors.maroon} />
             </View>
           </View>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.logoutBtn} onPress={handleSignOut}>
+          <Ionicons name="log-out-outline" size={22} color={colors.maroon} />
         </TouchableOpacity>
       </View>
 
@@ -237,8 +247,12 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   profileRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  logoutBtn: {
+    width: 38, height: 38, borderRadius: radii.md, backgroundColor: colors.card,
+    borderWidth: 1.5, borderColor: colors.border, alignItems: 'center', justifyContent: 'center',
+  },
   avatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.maroon, alignItems: 'center', justifyContent: 'center' },
   avatarText: { color: colors.white, fontWeight: '700', fontSize: 20 },
   welcome: { fontSize: 14, color: colors.textMuted, fontWeight: '600' },

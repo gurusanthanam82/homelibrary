@@ -98,7 +98,7 @@ export type MainTabParamList = {
 };
 
 export type LibraryStackParamList = {
-  LibraryList: undefined;
+  LibraryList: { shelf?: string; filter?: string } | undefined;
   BookDetail: { bookId: string };
   AddBook: { isbn?: string; prefill?: Partial<Book> };
   EditBook: { book: Book };

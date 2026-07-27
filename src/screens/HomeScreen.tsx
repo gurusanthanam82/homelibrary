@@ -72,6 +72,8 @@ export default function HomeScreen() {
   }, [search, books]);
 
   const upNext = books.filter((b) => b.status === 'reading').slice(0, 5);
+  const unreadBooks = books.filter((b) => b.status === 'unread').slice(0, 5);
+  const readBooks = books.filter((b) => b.status === 'finished').slice(0, 5);
   const totalSecondsRead = books.reduce((sum, b) => sum + (b.seconds_read ?? 0), 0);
 
   const displayName = data.profile.name || session?.user.email?.split('@')[0] || 'Reader';
@@ -79,6 +81,14 @@ export default function HomeScreen() {
 
   function goTab(tab: string) {
     (navigation as any).getParent()?.navigate(tab);
+  }
+
+  function goShelf(shelf: string) {
+    (navigation as any).getParent()?.navigate('Library', { screen: 'LibraryList', params: { shelf } });
+  }
+
+  function goFilter(filter: string) {
+    (navigation as any).getParent()?.navigate('Library', { screen: 'LibraryList', params: { filter } });
   }
 
   function handleSignOut() {
@@ -145,11 +155,11 @@ export default function HomeScreen() {
       {shelves.length > 0 && (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 12 }} contentContainerStyle={{ gap: 8 }}>
           {shelves.map((s) => (
-            <View key={s.name} style={styles.shelfChip}>
+            <TouchableOpacity key={s.name} style={styles.shelfChip} onPress={() => goShelf(s.name)}>
               <Ionicons name="bookmark" size={13} color={colors.maroon} />
               <Text style={styles.shelfChipText}>{s.name}</Text>
               <View style={styles.shelfChipCount}><Text style={styles.shelfChipCountText}>{s.count}</Text></View>
-            </View>
+            </TouchableOpacity>
           ))}
         </ScrollView>
       )}
@@ -226,8 +236,59 @@ export default function HomeScreen() {
 
       {upNext.length > 0 && (
         <>
-          <Text style={styles.sectionTitle}>Up next</Text>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.sectionTitle}>Up next</Text>
+            {stats.reading > upNext.length && (
+              <TouchableOpacity onPress={() => goFilter('reading')}><Text style={styles.seeAllText}>See all</Text></TouchableOpacity>
+            )}
+          </View>
           {upNext.map((b) => (
+            <TouchableOpacity key={b.id} style={styles.upNextRow} onPress={() => navigation.navigate('BookDetail', { bookId: b.id })}>
+              <View style={styles.upNextCover}>
+                {b.cover_url ? <Image source={{ uri: b.cover_url }} style={styles.upNextCoverImg} /> : null}
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.upNextTitle}>{b.title}</Text>
+                <Text style={styles.upNextAuthor}>{b.author}</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.textFaint} />
+            </TouchableOpacity>
+          ))}
+        </>
+      )}
+
+      {unreadBooks.length > 0 && (
+        <>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.sectionTitle}>Unread</Text>
+            {stats.unread > unreadBooks.length && (
+              <TouchableOpacity onPress={() => goFilter('unread')}><Text style={styles.seeAllText}>See all</Text></TouchableOpacity>
+            )}
+          </View>
+          {unreadBooks.map((b) => (
+            <TouchableOpacity key={b.id} style={styles.upNextRow} onPress={() => navigation.navigate('BookDetail', { bookId: b.id })}>
+              <View style={styles.upNextCover}>
+                {b.cover_url ? <Image source={{ uri: b.cover_url }} style={styles.upNextCoverImg} /> : null}
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.upNextTitle}>{b.title}</Text>
+                <Text style={styles.upNextAuthor}>{b.author}</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.textFaint} />
+            </TouchableOpacity>
+          ))}
+        </>
+      )}
+
+      {readBooks.length > 0 && (
+        <>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.sectionTitle}>Read</Text>
+            {stats.read > readBooks.length && (
+              <TouchableOpacity onPress={() => goFilter('finished')}><Text style={styles.seeAllText}>See all</Text></TouchableOpacity>
+            )}
+          </View>
+          {readBooks.map((b) => (
             <TouchableOpacity key={b.id} style={styles.upNextRow} onPress={() => navigation.navigate('BookDetail', { bookId: b.id })}>
               <View style={styles.upNextCover}>
                 {b.cover_url ? <Image source={{ uri: b.cover_url }} style={styles.upNextCoverImg} /> : null}
@@ -315,7 +376,9 @@ const styles = StyleSheet.create({
   actionTile: { width: '47%', borderRadius: radii.xl, padding: 18, minHeight: 120, justifyContent: 'space-between' },
   actionTitle: { fontSize: 17, fontWeight: '700', color: colors.white },
   actionSub: { fontSize: 12, color: colors.white, opacity: 0.85, marginTop: 2 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text, marginTop: 24, marginBottom: 12 },
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
+  sectionHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 24, marginBottom: 12 },
+  seeAllText: { fontSize: 13, fontWeight: '700', color: colors.maroon },
   upNextRow: {
     flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: colors.card,
     borderWidth: 1.5, borderColor: colors.border, borderRadius: radii.lg, padding: 12, marginBottom: 12,

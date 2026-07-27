@@ -1,11 +1,12 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, TextInput,
   StyleSheet, ActivityIndicator, RefreshControl, Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation, useFocusEffect, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RouteProp } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, radii, genreColor, statusColors, statusLabels } from '../theme';
 import { useAuth } from '../contexts/AuthContext';
@@ -14,6 +15,7 @@ import { SAMPLE_BOOKS } from '../sampleData';
 import type { Book, LibraryStackParamList } from '../types';
 
 type Nav = NativeStackNavigationProp<LibraryStackParamList>;
+type Route = RouteProp<LibraryStackParamList, 'LibraryList'>;
 
 const FILTERS: Array<{ key: string; label: string }> = [
   { key: 'All', label: 'All' },
@@ -25,13 +27,20 @@ const FILTERS: Array<{ key: string; label: string }> = [
 export default function LibraryScreen() {
   const { session } = useAuth();
   const navigation = useNavigation<Nav>();
+  const route = useRoute<Route>();
   const insets = useSafeAreaInsets();
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [seeding, setSeeding] = useState(false);
-  const [filter, setFilter] = useState('All');
+  const [filter, setFilter] = useState(route.params?.filter ?? 'All');
+  const [shelfFilter, setShelfFilter] = useState<string | undefined>(route.params?.shelf);
   const [query, setQuery] = useState('');
+
+  useEffect(() => {
+    if (route.params?.shelf !== undefined) setShelfFilter(route.params.shelf);
+    if (route.params?.filter !== undefined) setFilter(route.params.filter);
+  }, [route.params?.shelf, route.params?.filter]);
 
   const load = useCallback(async () => {
     if (!session) return;
@@ -48,12 +57,13 @@ export default function LibraryScreen() {
   const filtered = useMemo(() => {
     let list = books;
     if (filter !== 'All') list = list.filter((b) => b.status === filter);
+    if (shelfFilter) list = list.filter((b) => (b.shelf?.trim() || 'Unsorted') === shelfFilter);
     if (query.trim()) {
       const q = query.toLowerCase();
       list = list.filter((b) => b.title.toLowerCase().includes(q) || b.author.toLowerCase().includes(q) || (b.genre ?? '').toLowerCase().includes(q));
     }
     return list;
-  }, [books, filter, query]);
+  }, [books, filter, shelfFilter, query]);
 
   async function loadSampleLibrary() {
     if (!session) return;
@@ -106,6 +116,16 @@ export default function LibraryScreen() {
           onChangeText={setQuery}
         />
       </View>
+
+      {shelfFilter && (
+        <View style={styles.shelfBanner}>
+          <Ionicons name="bookmark" size={14} color={colors.maroon} />
+          <Text style={styles.shelfBannerText}>Shelf: {shelfFilter}</Text>
+          <TouchableOpacity onPress={() => setShelfFilter(undefined)}>
+            <Ionicons name="close-circle" size={18} color={colors.maroon} />
+          </TouchableOpacity>
+        </View>
+      )}
 
       <FlatList
         horizontal
@@ -191,6 +211,12 @@ const styles = StyleSheet.create({
     marginHorizontal: 20, marginTop: 14,
   },
   searchInput: { flex: 1, fontSize: 14, color: colors.text },
+  shelfBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.pinkBg,
+    borderWidth: 1, borderColor: colors.pinkBorder, borderRadius: radii.md,
+    marginHorizontal: 20, marginTop: 12, padding: 10,
+  },
+  shelfBannerText: { flex: 1, fontSize: 13, fontWeight: '700', color: colors.maroon },
   filterChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: radii.pill, backgroundColor: colors.chipBg },
   filterChipActive: { backgroundColor: colors.maroon },
   filterChipText: { fontSize: 13, fontWeight: '700', color: colors.text },

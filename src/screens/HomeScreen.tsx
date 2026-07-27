@@ -248,7 +248,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  profileRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  profileRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   logoutBtn: {
     width: 38, height: 38, borderRadius: radii.md, backgroundColor: colors.card,
     borderWidth: 1.5, borderColor: colors.border, alignItems: 'center', justifyContent: 'center',

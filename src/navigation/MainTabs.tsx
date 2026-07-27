@@ -8,6 +8,7 @@ import LibraryStack from './LibraryStack';
 import BuddiesStack from './BuddiesStack';
 import ScanScreen from '../screens/ScanScreen';
 import NotesScreen from '../screens/NotesScreen';
+import ReadingTrackerBar from '../components/ReadingTrackerBar';
 import type { MainTabParamList } from '../types';
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -22,6 +23,7 @@ function ScanTabIcon() {
 
 export default function MainTabs() {
   return (
+    <View style={{ flex: 1 }}>
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
@@ -51,6 +53,8 @@ export default function MainTabs() {
       <Tab.Screen name="Buddies" component={BuddiesStack} />
       <Tab.Screen name="Notes" component={NotesScreen} />
     </Tab.Navigator>
+    <ReadingTrackerBar />
+    </View>
   );
 }
 

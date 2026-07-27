@@ -160,7 +160,7 @@ export default function BookDetailScreen() {
       const seconds = stopMonitor();
       patch({ seconds_read: (book.seconds_read ?? 0) + seconds });
     } else {
-      startMonitor(book.id);
+      startMonitor(book.id, book.title);
     }
   }
 

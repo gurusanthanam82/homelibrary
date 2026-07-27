@@ -6,7 +6,7 @@ import type { Buddy, Note, Podcast, Ebook, Profile, Chapter } from '../types';
 
 const STORAGE_KEY = 'home-library:app-data:v3';
 
-type Monitor = { bookId: string | null; startedAt: number | null; paused: boolean; accumSeconds: number };
+type Monitor = { bookId: string | null; title: string; startedAt: number | null; paused: boolean; accumSeconds: number };
 
 type AppData = {
   buddies: Buddy[];
@@ -44,7 +44,7 @@ const defaultData: AppData = {
   emailBackupEnabled: false,
 };
 
-const idleMonitor: Monitor = { bookId: null, startedAt: null, paused: false, accumSeconds: 0 };
+const idleMonitor: Monitor = { bookId: null, title: '', startedAt: null, paused: false, accumSeconds: 0 };
 
 type AppDataContextType = {
   data: AppData;
@@ -70,7 +70,7 @@ type AppDataContextType = {
   toggleEmailBackup: () => void;
   sendEmailBackupNow: () => void;
   monitor: Monitor;
-  startMonitor: (bookId: string) => void;
+  startMonitor: (bookId: string, title: string) => void;
   pauseMonitor: () => void;
   resumeMonitor: () => void;
   stopMonitor: () => number;
@@ -228,8 +228,8 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
   const sendEmailBackupNow = () =>
     persist({ ...data, emailBackupLastSent: new Date().toLocaleString() });
 
-  const startMonitor = (bookId: string) => {
-    setMonitor((m) => (m.bookId === bookId ? m : { bookId, startedAt: Date.now(), paused: false, accumSeconds: 0 }));
+  const startMonitor = (bookId: string, title: string) => {
+    setMonitor((m) => (m.bookId === bookId ? m : { bookId, title, startedAt: Date.now(), paused: false, accumSeconds: 0 }));
   };
 
   const pauseMonitor = () => {

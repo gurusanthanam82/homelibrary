@@ -75,6 +75,7 @@ type AppDataContextType = {
   deleteNote: (id: string) => void;
   addPodcast: (p: Omit<Podcast, 'id'>) => void;
   removePodcast: (id: string) => void;
+  updatePodcast: (id: string, updates: Partial<Podcast>) => void;
   addEbook: (e: Omit<Ebook, 'id'>) => void;
   removeEbook: (id: string) => void;
   updateProfile: (updates: Partial<Profile>) => void;
@@ -217,6 +218,10 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
     persist({ ...data, podcasts: data.podcasts.filter((p) => p.id !== id) });
   };
 
+  const updatePodcast = (id: string, updates: Partial<Podcast>) => {
+    persist({ ...data, podcasts: data.podcasts.map((p) => (p.id === id ? { ...p, ...updates } : p)) });
+  };
+
   const addEbook = (e: Omit<Ebook, 'id'>) => {
     persist({ ...data, ebooks: [{ ...e, id: `e${Date.now()}` }, ...data.ebooks] });
   };
@@ -315,6 +320,7 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
         deleteNote,
         addPodcast,
         removePodcast,
+        updatePodcast,
         addEbook,
         removeEbook,
         updateProfile,

@@ -8,10 +8,11 @@ import { useAppData } from '../contexts/AppDataContext';
 
 export default function PodcastsScreen() {
   const navigation = useNavigation();
-  const { data, addPodcast, removePodcast } = useAppData();
+  const { data, addPodcast, removePodcast, updatePodcast } = useAppData();
   const insets = useSafeAreaInsets();
   const [query, setQuery] = useState('');
   const [addOpen, setAddOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [channel, setChannel] = useState('');
   const [genre, setGenre] = useState('');
@@ -32,10 +33,41 @@ export default function PodcastsScreen() {
     return Array.from(map.entries());
   }, [filtered]);
 
+  function resetForm() {
+    setTitle(''); setChannel(''); setGenre(''); setTopic(''); setHost(''); setGuest(''); setUrl('');
+    setEditingId(null);
+  }
+
+  function openAdd() {
+    resetForm();
+    setAddOpen(true);
+  }
+
+  function openEdit(pod: typeof data.podcasts[number]) {
+    setEditingId(pod.id);
+    setTitle(pod.title);
+    setChannel(pod.channel);
+    setGenre(pod.genre);
+    setTopic(pod.topic ?? '');
+    setHost(pod.interviewer ?? '');
+    setGuest(pod.interviewee ?? '');
+    setUrl(pod.url ?? '');
+    setAddOpen(true);
+  }
+
+  function cancel() {
+    resetForm();
+    setAddOpen(false);
+  }
+
   function save() {
     if (!title.trim()) return;
-    addPodcast({ title, channel, genre: genre || 'Other', topic, interviewer: host, interviewee: guest, url });
-    setTitle(''); setChannel(''); setGenre(''); setTopic(''); setHost(''); setGuest(''); setUrl('');
+    if (editingId) {
+      updatePodcast(editingId, { title, channel, genre: genre || 'Other', topic, interviewer: host, interviewee: guest, url });
+    } else {
+      addPodcast({ title, channel, genre: genre || 'Other', topic, interviewer: host, interviewee: guest, url });
+    }
+    resetForm();
     setAddOpen(false);
   }
 
@@ -50,7 +82,7 @@ export default function PodcastsScreen() {
             <Text style={styles.title}>Podcasts</Text>
             <Text style={styles.subtitle}>Grouped by genre</Text>
           </View>
-          <TouchableOpacity style={styles.addBtn} onPress={() => setAddOpen(true)}>
+          <TouchableOpacity style={styles.addBtn} onPress={openAdd}>
             <Ionicons name="add" size={14} color={colors.white} />
             <Text style={styles.addBtnText}>Add</Text>
           </TouchableOpacity>
@@ -72,7 +104,7 @@ export default function PodcastsScreen() {
           <View key={genreName} style={{ marginTop: 22 }}>
             <Text style={styles.groupLabel}>{genreName}</Text>
             {items.map((pod) => (
-              <View key={pod.id} style={styles.podCard}>
+              <TouchableOpacity key={pod.id} style={styles.podCard} activeOpacity={0.75} onPress={() => openEdit(pod)}>
                 <View style={styles.podHeader}>
                   <View style={styles.podIcon}><Ionicons name="mic-outline" size={20} color={colors.maroon} /></View>
                   <View style={{ flex: 1 }}>
@@ -96,19 +128,20 @@ export default function PodcastsScreen() {
                     <Text style={styles.linkText} numberOfLines={1}>{pod.url}</Text>
                   </TouchableOpacity>
                 ) : null}
-              </View>
+              </TouchableOpacity>
             ))}
           </View>
         ))}
       </ScrollView>
 
-      <Modal visible={addOpen} transparent animationType="slide" onRequestClose={() => setAddOpen(false)}>
+      <Modal visible={addOpen} transparent animationType="slide" onRequestClose={cancel}>
         <View style={styles.modalScrim}>
           <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
             <View style={styles.modalSheet}>
               <View style={styles.handle} />
               <View style={styles.modalHeader}>
-                <Text style={styles.sheetTitle}>Add podcast</Text>
+                <TouchableOpacity onPress={cancel}><Text style={styles.cancelText}>Cancel</Text></TouchableOpacity>
+                <Text style={[styles.sheetTitle, { flex: 1, textAlign: 'center' }]}>{editingId ? 'Edit podcast' : 'Add podcast'}</Text>
                 <TouchableOpacity style={styles.saveBtn} onPress={save}><Text style={styles.saveBtnText}>Save</Text></TouchableOpacity>
               </View>
               <ScrollView style={{ maxHeight: 400 }} contentContainerStyle={{ gap: 12 }}>
@@ -157,6 +190,7 @@ const styles = StyleSheet.create({
   handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: colors.border, alignSelf: 'center', marginBottom: 16 },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
   sheetTitle: { fontSize: 18, fontWeight: '700', color: colors.text },
+  cancelText: { fontSize: 14, fontWeight: '600', color: colors.textMuted },
   saveBtn: { backgroundColor: colors.maroon, paddingHorizontal: 16, paddingVertical: 9, borderRadius: radii.md },
   saveBtnText: { color: colors.white, fontWeight: '700', fontSize: 13 },
   input: { borderWidth: 1.5, borderColor: colors.border, borderRadius: radii.md, padding: 13, fontSize: 14, color: colors.text, backgroundColor: colors.card },

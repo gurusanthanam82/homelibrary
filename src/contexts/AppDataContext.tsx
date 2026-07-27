@@ -94,7 +94,8 @@ type AppDataContextType = {
   resumeMonitor: () => void;
   stopMonitor: () => number;
   getChapters: (bookId: string) => Chapter[] | undefined;
-  generateChapters: (bookId: string, seed?: string) => void;
+  addChapter: (bookId: string, chapter: { title: string; page: number }) => void;
+  removeChapterAt: (bookId: string, index: number) => void;
   deleteChapters: (bookId: string) => void;
   toggleChapter: (bookId: string, index: number) => void;
   markAllChapters: (bookId: string, read: boolean) => void;
@@ -102,44 +103,6 @@ type AppDataContextType = {
 };
 
 const AppDataContext = createContext<AppDataContextType | null>(null);
-
-function hashSeed(str: string): number {
-  let h = 2166136261;
-  for (let i = 0; i < str.length; i++) {
-    h ^= str.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return h >>> 0;
-}
-
-function mulberry32(seed: number) {
-  return function random() {
-    seed |= 0;
-    seed = (seed + 0x6d2b79f5) | 0;
-    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-function chaptersForBook(seedStr: string): Array<{ title: string; page: number }> {
-  const rand = mulberry32(hashSeed(seedStr));
-  const count = 8 + Math.floor(rand() * 9);
-  const includePrologue = rand() > 0.5;
-  const includeEpilogue = rand() > 0.5;
-  const list: Array<{ title: string; page: number }> = [];
-  let page = 5 + Math.floor(rand() * 10);
-  if (includePrologue) {
-    list.push({ title: 'Prologue', page });
-    page += 6 + Math.floor(rand() * 8);
-  }
-  for (let i = 1; i <= count; i++) {
-    list.push({ title: `Chapter ${i}`, page });
-    page += 16 + Math.floor(rand() * 20);
-  }
-  if (includeEpilogue) list.push({ title: 'Epilogue', page });
-  return list;
-}
 
 export function AppDataProvider({ children }: { children: React.ReactNode }) {
   const [data, setData] = useState<AppData>(defaultData);
@@ -283,9 +246,16 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
 
   const getChapters = (bookId: string) => data.chapters[bookId];
 
-  const generateChapters = (bookId: string, seed?: string) => {
-    const chapters: Chapter[] = chaptersForBook(seed || bookId).map((c) => ({ ...c, read: false }));
-    persist({ ...data, chapters: { ...data.chapters, [bookId]: chapters } });
+  const addChapter = (bookId: string, chapter: { title: string; page: number }) => {
+    const list = data.chapters[bookId] ?? [];
+    const next = [...list, { ...chapter, read: false }].sort((a, b) => a.page - b.page);
+    persist({ ...data, chapters: { ...data.chapters, [bookId]: next } });
+  };
+
+  const removeChapterAt = (bookId: string, index: number) => {
+    const list = data.chapters[bookId];
+    if (!list) return;
+    persist({ ...data, chapters: { ...data.chapters, [bookId]: list.filter((_, i) => i !== index) } });
   };
 
   const deleteChapters = (bookId: string) => {
@@ -339,7 +309,8 @@ export function AppDataProvider({ children }: { children: React.ReactNode }) {
         resumeMonitor,
         stopMonitor,
         getChapters,
-        generateChapters,
+        addChapter,
+        removeChapterAt,
         deleteChapters,
         toggleChapter,
         markAllChapters,

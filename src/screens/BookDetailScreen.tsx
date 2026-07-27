@@ -47,7 +47,7 @@ export default function BookDetailScreen() {
   const {
     data, addCustomGenre, addCustomShelf, addEbook, removeEbook,
     monitor, startMonitor, pauseMonitor, resumeMonitor, stopMonitor,
-    getChapters, generateChapters, deleteChapters, toggleChapter, markAllChapters,
+    getChapters, addChapter, removeChapterAt, deleteChapters, toggleChapter, markAllChapters,
   } = useAppData();
   const [book, setBook] = useState<Book | null>(null);
   const [loading, setLoading] = useState(true);
@@ -56,7 +56,8 @@ export default function BookDetailScreen() {
   const [shelfSheetOpen, setShelfSheetOpen] = useState(false);
   const [customShelfDraft, setCustomShelfDraft] = useState('');
   const [chaptersOpen, setChaptersOpen] = useState(false);
-  const [scanState, setScanState] = useState<'idle' | 'scanning'>('idle');
+  const [newChapterTitle, setNewChapterTitle] = useState('');
+  const [newChapterPage, setNewChapterPage] = useState('');
   const [tick, setTick] = useState(0);
 
   const GENRES = [...BASE_GENRES, ...data.customGenres];
@@ -168,24 +169,22 @@ export default function BookDetailScreen() {
   function openChapters() {
     if (!book) return;
     setChaptersOpen(true);
-    if (!getChapters(book.id)) setScanState('idle');
-    else setScanState('idle');
   }
 
-  function scanChapterIndex() {
-    if (!book) return;
-    setScanState('scanning');
-    setTimeout(() => {
-      generateChapters(book.id, `${book.title}|${book.author}`);
-      setScanState('idle');
-    }, 1400);
+  function submitNewChapter() {
+    if (!book || !newChapterTitle.trim() || !newChapterPage.trim()) return;
+    const page = parseInt(newChapterPage, 10);
+    if (isNaN(page)) return;
+    addChapter(book.id, { title: newChapterTitle.trim(), page });
+    setNewChapterTitle('');
+    setNewChapterPage('');
   }
 
-  function rescanChapters() {
+  function confirmDeleteChapters() {
     if (!book) return;
-    Alert.alert('Rescan chapters', 'This will delete the current chapter list and scan again.', [
+    Alert.alert('Delete chapters', 'Remove all scanned chapters for this book?', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete & Rescan', style: 'destructive', onPress: () => { deleteChapters(book.id); scanChapterIndex(); } },
+      { text: 'Delete', style: 'destructive', onPress: () => deleteChapters(book.id) },
     ]);
   }
 
@@ -506,40 +505,47 @@ export default function BookDetailScreen() {
               <Text style={styles.chaptersHeaderTitle}>Chapters</Text>
               <Text style={styles.chaptersHeaderSub}>{book.title}</Text>
             </View>
-            {chapters && scanState === 'idle' ? (
-              <TouchableOpacity style={styles.backBtn} onPress={rescanChapters}>
-                <Ionicons name="refresh" size={18} color={colors.text} />
+            {chapters && chapters.length > 0 ? (
+              <TouchableOpacity style={styles.backBtn} onPress={confirmDeleteChapters}>
+                <Ionicons name="trash-outline" size={18} color={colors.maroon} />
               </TouchableOpacity>
             ) : (
               <View style={{ width: 38 }} />
             )}
           </View>
 
-          {!chapters && scanState === 'idle' && (
+          {(!chapters || chapters.length === 0) && (
             <View style={styles.scanIdle}>
               <View style={styles.scanIconBox}><Ionicons name="reader-outline" size={38} color={colors.maroon} /></View>
-              <Text style={styles.scanTitle}>Scan the Index page</Text>
-              <Text style={styles.scanSub}>Open the book's table of contents and hold it in view to detect all chapters</Text>
-              <TouchableOpacity style={styles.scanBtn} onPress={scanChapterIndex}>
-                <Ionicons name="scan-outline" size={18} color={colors.white} />
-                <Text style={styles.scanBtnText}>Scan now</Text>
-              </TouchableOpacity>
+              <Text style={styles.scanTitle}>No chapters yet</Text>
+              <Text style={styles.scanSub}>Add each chapter's title and page number from the table of contents</Text>
             </View>
           )}
 
-          {scanState === 'scanning' && (
-            <View style={styles.scanIdle}>
-              <View style={styles.scanBoxAnim}>
-                <ActivityIndicator color={colors.coral} size="large" />
-              </View>
-              <Text style={styles.scanTitle}>Reading index page…</Text>
-              <Text style={styles.scanSub}>Detecting chapters</Text>
-            </View>
-          )}
+          <View style={styles.addChapterRow}>
+            <TextInput
+              style={[styles.input, { flex: 1 }]}
+              placeholder="Chapter title"
+              placeholderTextColor={colors.textFaint}
+              value={newChapterTitle}
+              onChangeText={setNewChapterTitle}
+            />
+            <TextInput
+              style={[styles.input, { width: 72 }]}
+              placeholder="Page"
+              placeholderTextColor={colors.textFaint}
+              value={newChapterPage}
+              onChangeText={setNewChapterPage}
+              keyboardType="numeric"
+            />
+            <TouchableOpacity style={styles.addBtn} onPress={submitNewChapter}>
+              <Ionicons name="add" size={18} color={colors.white} />
+            </TouchableOpacity>
+          </View>
 
-          {chapters && scanState === 'idle' && (
+          {chapters && chapters.length > 0 && (
             <>
-              <View style={{ padding: 18 }}>
+              <View style={{ paddingHorizontal: 18 }}>
                 <View style={styles.chProgressRow}>
                   <Text style={styles.chProgressText}>{chReadCount} of {chapters.length} read</Text>
                   <Text style={styles.chProgressPct}>{chPct}%</Text>
@@ -554,13 +560,18 @@ export default function BookDetailScreen() {
               </View>
               <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 18, paddingBottom: 30 }}>
                 {chapters.map((c, i) => (
-                  <TouchableOpacity key={i} style={styles.chRow} onPress={() => toggleChapter(book.id, i)}>
-                    <View style={[styles.checkbox, c.read && styles.checkboxChecked]}>
-                      {c.read && <Ionicons name="checkmark" size={13} color={colors.white} />}
-                    </View>
-                    <Text style={[styles.chTitle, c.read && { color: colors.textMuted }]} numberOfLines={1}>{c.title}</Text>
-                    <Text style={styles.chPage}>p.{c.page}</Text>
-                  </TouchableOpacity>
+                  <View key={i} style={styles.chRow}>
+                    <TouchableOpacity style={styles.chRowMain} onPress={() => toggleChapter(book.id, i)}>
+                      <View style={[styles.checkbox, c.read && styles.checkboxChecked]}>
+                        {c.read && <Ionicons name="checkmark" size={13} color={colors.white} />}
+                      </View>
+                      <Text style={[styles.chTitle, c.read && { color: colors.textMuted }]} numberOfLines={1}>{c.title}</Text>
+                      <Text style={styles.chPage}>p.{c.page}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.chRemoveBtn} onPress={() => removeChapterAt(book.id, i)}>
+                      <Ionicons name="close" size={14} color={colors.textFaint} />
+                    </TouchableOpacity>
+                  </View>
                 ))}
               </ScrollView>
             </>
@@ -670,13 +681,11 @@ const styles = StyleSheet.create({
   chaptersHeader: { paddingTop: 50, paddingHorizontal: 18, paddingBottom: 14, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: colors.border },
   chaptersHeaderTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
   chaptersHeaderSub: { fontSize: 11, color: colors.textMuted, fontWeight: '600' },
-  scanIdle: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
+  scanIdle: { alignItems: 'center', justifyContent: 'center', padding: 32 },
   scanIconBox: { width: 84, height: 84, borderRadius: 22, backgroundColor: colors.pinkBg, borderWidth: 1.5, borderColor: colors.pinkBorder, alignItems: 'center', justifyContent: 'center', marginBottom: 22 },
-  scanBoxAnim: { width: 200, height: 140, borderRadius: 18, backgroundColor: colors.dark, alignItems: 'center', justifyContent: 'center', marginBottom: 22 },
   scanTitle: { fontSize: 20, fontWeight: '700', color: colors.text, textAlign: 'center' },
   scanSub: { fontSize: 13, color: colors.textMuted, fontWeight: '600', marginTop: 8, textAlign: 'center', maxWidth: 230 },
-  scanBtn: { marginTop: 26, flexDirection: 'row', alignItems: 'center', gap: 9, backgroundColor: colors.maroon, paddingHorizontal: 26, paddingVertical: 14, borderRadius: radii.lg },
-  scanBtnText: { color: colors.white, fontWeight: '700', fontSize: 14 },
+  addChapterRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 18, paddingBottom: 16 },
   chProgressRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
   chProgressText: { fontSize: 13, fontWeight: '700', color: colors.text },
   chProgressPct: { fontSize: 13, fontWeight: '700', color: colors.maroon },
@@ -686,7 +695,9 @@ const styles = StyleSheet.create({
   selectAllText: { fontSize: 14, fontWeight: '700', color: colors.text },
   checkbox: { width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },
   checkboxChecked: { backgroundColor: colors.maroon, borderColor: colors.maroon },
-  chRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.borderSoft },
+  chRow: { flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: colors.borderSoft },
+  chRowMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12 },
   chTitle: { flex: 1, fontSize: 14, fontWeight: '700', color: colors.text },
   chPage: { fontSize: 12, color: colors.textFaint, fontWeight: '600' },
+  chRemoveBtn: { width: 30, height: 30, alignItems: 'center', justifyContent: 'center' },
 });

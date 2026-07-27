@@ -54,6 +54,15 @@ export default function LibraryScreen() {
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
+  const shelves = useMemo(() => {
+    const map = new Map<string, number>();
+    books.forEach((b) => {
+      const key = b.shelf?.trim() || 'Unsorted';
+      map.set(key, (map.get(key) ?? 0) + 1);
+    });
+    return Array.from(map.entries()).map(([name, count]) => ({ name, count }));
+  }, [books]);
+
   const filtered = useMemo(() => {
     let list = books;
     if (filter !== 'All') list = list.filter((b) => b.status === filter);
@@ -116,6 +125,29 @@ export default function LibraryScreen() {
           onChangeText={setQuery}
         />
       </View>
+
+      {shelves.length > 0 && (
+        <FlatList
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          data={shelves}
+          keyExtractor={(s) => s.name}
+          style={{ flexGrow: 0, marginTop: 12 }}
+          contentContainerStyle={{ gap: 8, paddingHorizontal: 20 }}
+          renderItem={({ item: s }) => (
+            <TouchableOpacity
+              style={[styles.shelfChip, shelfFilter === s.name && styles.shelfChipActive]}
+              onPress={() => setShelfFilter(shelfFilter === s.name ? undefined : s.name)}
+            >
+              <Ionicons name="bookmark" size={13} color={shelfFilter === s.name ? colors.white : colors.maroon} />
+              <Text style={[styles.shelfChipText, shelfFilter === s.name && styles.shelfChipTextActive]}>{s.name}</Text>
+              <View style={[styles.shelfChipCount, shelfFilter === s.name && styles.shelfChipCountActive]}>
+                <Text style={[styles.shelfChipCountText, shelfFilter === s.name && styles.shelfChipCountTextActive]}>{s.count}</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+        />
+      )}
 
       {shelfFilter && (
         <View style={styles.shelfBanner}>
@@ -211,6 +243,17 @@ const styles = StyleSheet.create({
     marginHorizontal: 20, marginTop: 14,
   },
   searchInput: { flex: 1, fontSize: 14, color: colors.text },
+  shelfChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: colors.pinkBg,
+    paddingHorizontal: 13, paddingVertical: 8, borderRadius: radii.md,
+  },
+  shelfChipActive: { backgroundColor: colors.maroon },
+  shelfChipText: { fontSize: 13, fontWeight: '700', color: colors.maroon },
+  shelfChipTextActive: { color: colors.white },
+  shelfChipCount: { backgroundColor: colors.white, borderRadius: 8, paddingHorizontal: 7, paddingVertical: 1 },
+  shelfChipCountActive: { backgroundColor: 'rgba(255,255,255,0.25)' },
+  shelfChipCountText: { fontSize: 11, color: colors.maroon },
+  shelfChipCountTextActive: { color: colors.white },
   shelfBanner: {
     flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.pinkBg,
     borderWidth: 1, borderColor: colors.pinkBorder, borderRadius: radii.md,

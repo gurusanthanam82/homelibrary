@@ -25,7 +25,7 @@ export default function AuthScreen() {
       if (mode === 'login') {
         await signIn(email, password);
       } else {
-        await signUp(email, password);
+        await signUp(email, password, name);
         Alert.alert('Check your email', 'We sent you a confirmation link.');
       }
     } catch (e: any) {
@@ -38,7 +38,7 @@ export default function AuthScreen() {
   if (emailFlow) {
     return (
       <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <View style={{ height: insets.top + 8, justifyContent: 'center' }}>
+        <View style={{ paddingTop: insets.top + 8 }}>
           <TouchableOpacity onPress={() => setEmailFlow(false)} style={styles.backRow}>
             <Ionicons name="chevron-back" size={20} color={colors.maroon} />
             <Text style={styles.backText}>Back</Text>

@@ -16,8 +16,9 @@ export default function ProfileScreen() {
   const [resetting, setResetting] = useState(false);
   const insets = useSafeAreaInsets();
   const [shareAll, setShareAll] = useState(false);
-  const [name, setName] = useState(data.profile.name);
-  const [email, setEmail] = useState(data.profile.email || session?.user.email || '');
+  const accountName = (session?.user.user_metadata as any)?.full_name || session?.user.email?.split('@')[0] || '';
+  const [name, setName] = useState(data.profile.name || accountName);
+  const email = session?.user.email || '';
   const [phone, setPhone] = useState(data.profile.phone);
   const [location, setLocation] = useState(data.profile.location);
   const [favGenre, setFavGenre] = useState(data.profile.favGenre);
@@ -126,7 +127,7 @@ export default function ProfileScreen() {
 
       <View style={{ gap: 14, marginTop: 22 }}>
         <View><Text style={styles.label}>Name</Text><TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Your name" placeholderTextColor={colors.textFaint} /></View>
-        <View><Text style={styles.label}>Email</Text><TextInput style={styles.input} value={email} onChangeText={setEmail} placeholder="you@email.com" placeholderTextColor={colors.textFaint} autoCapitalize="none" /></View>
+        <View><Text style={styles.label}>Email</Text><TextInput style={[styles.input, styles.inputLocked]} value={email} editable={false} /></View>
         <View style={styles.row}>
           <View style={{ flex: 1 }}><Text style={styles.label}>Phone</Text><TextInput style={styles.input} value={phone} onChangeText={setPhone} placeholder="Optional" placeholderTextColor={colors.textFaint} /></View>
           <View style={{ flex: 1 }}><Text style={styles.label}>Location</Text><TextInput style={styles.input} value={location} onChangeText={setLocation} placeholder="City" placeholderTextColor={colors.textFaint} /></View>
@@ -205,6 +206,7 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 13, color: colors.textMuted, fontWeight: '600' },
   label: { fontSize: 11, fontWeight: '700', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 },
   input: { borderWidth: 1.5, borderColor: colors.border, borderRadius: radii.md, padding: 12, fontSize: 15, color: colors.text, backgroundColor: colors.card },
+  inputLocked: { color: colors.textMuted, backgroundColor: colors.chipBg },
   textarea: { minHeight: 80, textAlignVertical: 'top' },
   row: { flexDirection: 'row', gap: 12 },
   sharingSection: { marginTop: 22, borderTopWidth: 1.5, borderTopColor: colors.border, paddingTop: 18 },

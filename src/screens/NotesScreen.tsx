@@ -1,27 +1,40 @@
-import React, { useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
   StyleSheet, Modal, Alert, Linking, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, radii, buddyColors } from '../theme';
+import { useAuth } from '../contexts/AuthContext';
 import { useAppData } from '../contexts/AppDataContext';
-import type { Note } from '../types';
+import { getBooks } from '../services/books';
+import type { Book, Note } from '../types';
 
 const NOTE_COLORS = [colors.maroon, colors.teal, colors.purple, '#c98a2b', '#3b6ea5'];
 
 export default function NotesScreen() {
+  const { session } = useAuth();
   const { data, addNote, updateNote, deleteNote } = useAppData();
   const insets = useSafeAreaInsets();
   const [query, setQuery] = useState('');
   const [composerOpen, setComposerOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [shareNoteId, setShareNoteId] = useState<string | null>(null);
+  const [bookPickerOpen, setBookPickerOpen] = useState(false);
+  const [books, setBooks] = useState<Book[]>([]);
   const [draftText, setDraftText] = useState('');
   const [draftBook, setDraftBook] = useState('');
   const [draftPage, setDraftPage] = useState('');
   const noteInputRef = useRef<TextInput>(null);
+
+  const loadBooks = useCallback(async () => {
+    if (!session) return;
+    setBooks(await getBooks(session.user.id));
+  }, [session]);
+
+  useFocusEffect(useCallback(() => { loadBooks(); }, [loadBooks]));
 
   const q = query.toLowerCase();
   const filtered = data.notes.filter((n) => n.text.toLowerCase().includes(q) || n.book.toLowerCase().includes(q));
@@ -39,6 +52,14 @@ export default function NotesScreen() {
       setDraftPage('');
     }
     setComposerOpen(true);
+  }
+
+  function cancelComposer() {
+    setComposerOpen(false);
+    setEditingId(null);
+    setDraftText('');
+    setDraftBook('');
+    setDraftPage('');
   }
 
   function saveNote() {
@@ -137,14 +158,18 @@ export default function NotesScreen() {
         visible={composerOpen}
         transparent
         animationType="slide"
-        onRequestClose={() => setComposerOpen(false)}
+        onRequestClose={cancelComposer}
         onShow={() => setTimeout(() => noteInputRef.current?.focus(), 250)}
       >
         <View style={styles.modalScrim}>
           <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
             <View style={styles.modalSheet}>
               <View style={styles.handle} />
-              <Text style={styles.sheetTitle}>{editingId ? 'Edit note' : 'New note'}</Text>
+              <View style={styles.composerHeader}>
+                <TouchableOpacity onPress={cancelComposer}><Text style={styles.cancelText}>Cancel</Text></TouchableOpacity>
+                <Text style={styles.sheetTitle}>{editingId ? 'Edit note' : 'New note'}</Text>
+                <View style={{ width: 50 }} />
+              </View>
               <TextInput
                 ref={noteInputRef}
                 style={styles.noteInput}
@@ -155,7 +180,12 @@ export default function NotesScreen() {
                 multiline
               />
               <View style={styles.row}>
-                <TextInput style={[styles.input, { flex: 1 }]} placeholder="Book title" placeholderTextColor={colors.textFaint} value={draftBook} onChangeText={setDraftBook} />
+                <TouchableOpacity style={[styles.input, styles.bookPickerBtn, { flex: 1 }]} onPress={() => setBookPickerOpen(true)}>
+                  <Text style={draftBook ? styles.bookPickerText : styles.bookPickerPlaceholder} numberOfLines={1}>
+                    {draftBook || 'Choose book…'}
+                  </Text>
+                  <Ionicons name="chevron-down" size={16} color={colors.textMuted} />
+                </TouchableOpacity>
                 <TextInput style={[styles.input, { width: 90 }]} placeholder="Page" placeholderTextColor={colors.textFaint} value={draftPage} onChangeText={setDraftPage} keyboardType="numeric" />
               </View>
               <TouchableOpacity style={styles.saveBtn} onPress={saveNote}>
@@ -166,12 +196,33 @@ export default function NotesScreen() {
         </View>
       </Modal>
 
+      <Modal visible={bookPickerOpen} transparent animationType="slide" onRequestClose={() => setBookPickerOpen(false)}>
+        <View style={styles.modalScrim}>
+          <TouchableOpacity style={{ flex: 1 }} onPress={() => setBookPickerOpen(false)} />
+          <View style={styles.modalSheet}>
+            <View style={styles.handle} />
+            <Text style={[styles.sheetTitle, { marginBottom: 14 }]}>Choose a book</Text>
+            <ScrollView style={{ maxHeight: 380 }} contentContainerStyle={{ gap: 4 }}>
+              {books.length === 0 && (
+                <Text style={{ color: colors.textMuted, fontWeight: '600', paddingVertical: 16, textAlign: 'center' }}>No books in your library yet.</Text>
+              )}
+              {books.map((b) => (
+                <TouchableOpacity key={b.id} style={styles.bookPickRow} onPress={() => { setDraftBook(b.title); setBookPickerOpen(false); }}>
+                  <Text style={{ flex: 1, fontSize: 15, fontWeight: '700', color: colors.text }} numberOfLines={1}>{b.title}</Text>
+                  <Text style={{ fontSize: 12, color: colors.textMuted, fontWeight: '600' }} numberOfLines={1}>{b.author}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
       <Modal visible={!!shareNoteId} transparent animationType="slide" onRequestClose={() => setShareNoteId(null)}>
         <View style={styles.modalScrim}>
           <TouchableOpacity style={{ flex: 1 }} onPress={() => setShareNoteId(null)} />
           <View style={styles.modalSheet}>
             <View style={styles.handle} />
-            <Text style={styles.sheetTitle}>Share this note</Text>
+            <Text style={[styles.sheetTitle, { marginBottom: 14 }]}>Share this note</Text>
             <TouchableOpacity
               style={styles.whatsappBtn}
               onPress={() => {
@@ -222,7 +273,13 @@ const styles = StyleSheet.create({
   modalScrim: { flex: 1, backgroundColor: 'rgba(27,23,20,0.5)', justifyContent: 'flex-end' },
   modalSheet: { backgroundColor: colors.bg, borderTopLeftRadius: radii.sheet, borderTopRightRadius: radii.sheet, padding: 20, paddingBottom: 30 },
   handle: { width: 40, height: 4, borderRadius: 2, backgroundColor: colors.border, alignSelf: 'center', marginBottom: 16 },
-  sheetTitle: { fontSize: 20, fontWeight: '700', color: colors.text, marginBottom: 14 },
+  sheetTitle: { fontSize: 18, fontWeight: '700', color: colors.text },
+  composerHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
+  cancelText: { fontSize: 14, fontWeight: '600', color: colors.textMuted },
+  bookPickerBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  bookPickerText: { fontSize: 14, color: colors.text, flex: 1 },
+  bookPickerPlaceholder: { fontSize: 14, color: colors.textFaint, flex: 1 },
+  bookPickRow: { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.borderSoft, flexDirection: 'row', alignItems: 'center', gap: 10 },
   noteInput: { borderWidth: 1.5, borderColor: colors.border, borderRadius: radii.md, padding: 13, fontSize: 15, color: colors.text, backgroundColor: colors.card, minHeight: 90, textAlignVertical: 'top' },
   row: { flexDirection: 'row', gap: 10, marginTop: 12 },
   input: { borderWidth: 1.5, borderColor: colors.border, borderRadius: radii.md, padding: 13, fontSize: 14, color: colors.text, backgroundColor: colors.card },
